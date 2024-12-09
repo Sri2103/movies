@@ -1,0 +1,6 @@
+api:
+  port: 8081
+jaeger:
+  url: "127.0.0.1:4317"
+prometheus:
+  metricsPort: 8091
