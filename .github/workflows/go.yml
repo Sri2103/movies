@@ -5,39 +5,44 @@ name: Audit
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.22.x'
-    
-    - name: verify dependencies
-      run: go mod verify
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.22.x"
 
-    - name: install staticcheck
-      run: go install honnef.co/go/tools/cmd/staticcheck@latest
+      - name: verify dependencies
+        run: go mod verify
 
-    - name: run staticcheck
-      run: staticcheck ./...
+      - name: install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
 
-    - name: install golangci-lint
-      run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - name: run staticcheck
+        run: staticcheck ./...
 
-    - name: run golangci-lint
-      run: golangci-lint run --timeout 5m
+      - name: install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
-    - name: Build
-      run: go build -v ./...
+      - name: run golangci-lint
+        run: golangci-lint run --timeout 5m
 
-    - name: Test
-      run: go test -v ./...
+      - name: Test
+        run: go test -v ./...
+
+      - name: Build metadata
+        run: go build -o metadata ./metadata/cmd/main.go
+
+      - name: Build ratings
+        run: go build -o rating ./rating/cmd/main.go
+
+      - name: Build movies
+        run: go build -o movie ./movie/cmd/main.go
