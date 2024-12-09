@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"k8s.io/apimachinery/pkg/util/rand"
 	"movieexample.com/movie/internal/gateway"
@@ -85,7 +86,7 @@ func (g *Gateway) PutRating(ctx context.Context, recordID model.RecordID, record
 	values := req.URL.Query()
 	values.Add("id", string(recordID))
 	values.Add("type", string(recordType))
-	values.Add("value", string(rating.Value))
+	values.Add("value", strconv.Itoa(int(rating.Value)))
 	values.Add("userId", string(rating.UserID))
 	req.URL.RawQuery = values.Encode()
 	res, err := http.DefaultClient.Do(req)
