@@ -29,8 +29,13 @@ const ServiceName = "movie"
 
 func main() {
 	logger, _ := zap.NewProduction()
-	defer logger.Sync()
-	logger.Info("Starting the movie service")
+
+	defer func() {
+		err := logger.Sync()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	f, err := os.Open("./movie/internal/configs/base.yaml")
 	if err != nil {
@@ -41,9 +46,9 @@ func main() {
 	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
 		logger.Fatal("Failed to decode config file", zap.Error(err))
 	}
-	logger.Info("Config loaded", zap.Any("config", cfg))
 
 	port := cfg.API.Port
+
 	logger.Info("Starting the movie service on port", zap.Int("port", port))
 
 	ctx := context.Background()
@@ -75,21 +80,30 @@ func main() {
 			time.Sleep(1 * time.Second)
 		}
 	}()
-	defer registry.DeRegister(ctx, instanceID, ServiceName)
+
+	defer func() {
+		if err := registry.ReportHealthState(instanceID, ServiceName); err != nil {
+			log.Printf("Failed to report unhealthy state: %s", err)
+		}
+	}()
 
 	metadataGateway := metadatagateway.New(registry)
 	ratingGateway := ratinggateway.New(registry)
 
 	ctrl := movie.New(ratingGateway, metadataGateway)
-	srv := grpc.NewServer()
-	reflection.Register(srv)
-	gen.RegisterMovieServiceServer(srv, grpcHandler.New(ctrl))
+	startGrpcServer(port, ctrl)
+}
+
+func startGrpcServer(port int, controller *movie.Controller) {
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
-		logger.Fatal("Failed to listen", zap.Error(err))
+		log.Fatalf("failed to listen: %v", err)
 	}
+	grpcServer := grpc.NewServer()
+	reflection.Register(grpcServer)
+	gen.RegisterMovieServiceServer(grpcServer, grpcHandler.New(controller))
 	log.Printf("server listening at %v", lis.Addr())
-	if err := srv.Serve(lis); err != nil {
-		logger.Fatal("Failed to serve", zap.Error(err))
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed to drive server: %v", err)
 	}
 }

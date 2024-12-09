@@ -35,7 +35,6 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
-	logger.Info("Starting the rating service")
 
 	f, err := os.Open("./rating/internal/configs/base.yaml")
 	if err != nil {
@@ -45,7 +44,6 @@ func main() {
 	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
 		logger.Fatal("Failed to decode config file", zap.Error(err))
 	}
-	logger.Info("Config loaded", zap.Any("config", cfg))
 	port := cfg.API.Port
 
 	logger.Info("Starting the metadata service on port %d", zap.Int("port", port))
@@ -73,18 +71,21 @@ func main() {
 	}
 
 	instanceID := discovery.GenerateInstanceID(ServiceName)
-	if err := registry.Register(ctx, instanceID, ServiceName, fmt.Sprintf("localhost:%d", port)); err != nil {
+	// if err := registry.Register(ctx, instanceID, ServiceName, fmt.Sprintf("localhost:%d", port)); err != nil {
+	// 	logger.Fatal("Failed to register service", zap.Error(err))
+	// }
+
+	// go func() {
+	// 	for {
+	// 		if err := registry.ReportHealthState(instanceID, ServiceName); err != nil {
+	// 			log.Printf("Failed to report healthy state: %s", err)
+	// 		}
+	// 		time.Sleep(1 * time.Second)
+	// 	}
+	// }()
+	if err := registerConsul(ctx, registry, instanceID, ServiceName, port); err != nil {
 		logger.Fatal("Failed to register service", zap.Error(err))
 	}
-
-	go func() {
-		for {
-			if err := registry.ReportHealthState(instanceID, ServiceName); err != nil {
-				log.Printf("Failed to report healthy state: %s", err)
-			}
-			time.Sleep(1 * time.Second)
-		}
-	}()
 	defer func() {
 		err := registry.DeRegister(ctx, instanceID, ServiceName)
 		if err != nil {
@@ -96,13 +97,10 @@ func main() {
 
 	controller := rating.NewController(repo, nil)
 
-	// handler := httpHandler.NewHandler(controller)
+	startGrpcServer(logger, port, controller)
+}
 
-	// http.Handle("/rating", http.HandlerFunc(handler.Handle))
-
-	// log.Println("Starting rating service")
-
-	// log.Fatal(http.ListenAndServe(":8082", nil))
+func startGrpcServer(logger *zap.Logger, port int, controller *rating.Controller) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		logger.Fatal("Failed to listen", zap.Error(err))
@@ -118,4 +116,20 @@ func main() {
 	if err := grpcServer.Serve(lis); err != nil {
 		logger.Fatal("Failed to serve", zap.Error(err))
 	}
+}
+
+func registerConsul(ctx context.Context, registry discovery.Registry, instanceID string, serviceName string, port int) error {
+	if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", port)); err != nil {
+		return err
+	}
+	go func() {
+		for {
+			if err := registry.ReportHealthState(instanceID, serviceName); err != nil {
+				log.Printf("Failed to report healthy state: %s", err)
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}()
+
+	return nil
 }
