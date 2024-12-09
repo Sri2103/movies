@@ -1,9 +1,17 @@
 linters:
-  enable-all: true
-  disable-all: false
-  fast: true
-  disable:
-    - depguard
-    - testpackage
-    - funlen
-    - gci
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - gofmt
+    - goimports
+    - ineffassign
+    - unused
+    - cyclop
+
+run:
+  issues-exit-code: 1
+  timeout: 2m
+
+
+
