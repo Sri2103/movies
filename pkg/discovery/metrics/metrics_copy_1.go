@@ -153,12 +153,9 @@ func enableOpenTelemetryMetrics(ctx context.Context, mc *MetricsConfig) error {
 	// logrus.Info("OpenTelemetry metrics exporter started")
 	log.Println("OpenTelemetry metrics exporter started")
 	return nil
-
 }
 
-var (
-	metricsOnce *sync.Once = &sync.Once{}
-)
+var metricsOnce *sync.Once = &sync.Once{}
 
 func ConfigureMetrics(ctx context.Context, mc *MetricsConfig) error {
 	if ctx == nil {
@@ -190,7 +187,6 @@ func ConfigureMetrics(ctx context.Context, mc *MetricsConfig) error {
 		if err := otelruntimemetrics.Start(otelruntimemetrics.WithMinimumReadMemStatsInterval(time.Second)); err != nil {
 			// logrus.WithError(err).Error("unable to start OpenTelemetry Go runtime metrics collection")
 			log.Printf("unable to start OpenTelemetry Go runtime metrics collection: %v", err)
-
 		} else {
 			// logrus.Info("Go runtime metrics collection started")
 			log.Println("Go runtime metrics collection started")
@@ -215,9 +211,7 @@ func ConfigureMetrics(ctx context.Context, mc *MetricsConfig) error {
 	return err
 }
 
-var (
-	cleanupWaitGroup sync.WaitGroup
-)
+var cleanupWaitGroup sync.WaitGroup
 
 // WaitForCleanup waits until all observability long-running goroutines shut
 // down cleanly or until the provided context signals done.

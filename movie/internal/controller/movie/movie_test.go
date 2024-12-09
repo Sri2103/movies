@@ -8,8 +8,6 @@ import (
 	"movieexample.com/movie/pkg/model"
 )
 
-
-
 func TestController_Get(t *testing.T) {
 	type args struct {
 		ctx context.Context

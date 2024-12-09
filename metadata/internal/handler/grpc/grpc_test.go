@@ -12,9 +12,11 @@ import (
 	"movieexample.com/metadata/pkg/model"
 )
 
-var memoryStore = memory.New()
-var controller = metadata.New(memoryStore)
-var handler = New(controller)
+var (
+	memoryStore = memory.New()
+	controller  = metadata.New(memoryStore)
+	handler     = New(controller)
+)
 
 func TestHandler_GetMetadata(t *testing.T) {
 	type args struct {
@@ -66,7 +68,6 @@ func TestHandler_GetMetadata(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 			t.Log(got, "got metadata")
-
 		})
 	}
 }

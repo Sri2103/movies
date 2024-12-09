@@ -37,5 +37,4 @@ func SetUpMetrics(ctx context.Context, serviceName string) (*sdkmetric.MeterProv
 	otel.SetMeterProvider(mp)
 
 	return mp, nil
-
 }

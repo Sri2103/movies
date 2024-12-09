@@ -26,5 +26,4 @@ func SetUpTracing(ctx context.Context, serviceName string) (*tracesdk.TracerProv
 		tracesdk.WithSampler(tracesdk.ParentBased(tracesdk.TraceIDRatioBased(0.6))),
 	)
 	return tp, nil
-
 }

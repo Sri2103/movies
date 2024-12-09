@@ -40,7 +40,6 @@ func (g *Gateway) GetAggregatedRating(ctx context.Context, recordID model.Record
 	url := fmt.Sprintf("http://%s/%s", addrs[rand.Intn(len(addrs))], "rating")
 
 	req, err := http.NewRequest("GET", url, nil)
-
 	if err != nil {
 		return 0, err
 	}

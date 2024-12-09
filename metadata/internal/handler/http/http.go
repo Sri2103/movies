@@ -49,7 +49,6 @@ func (h *Handler) GetMetadata(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
 }
 
 // PutMetadata is an HTTP handler that updates the metadata for a given ID. It decodes the request body

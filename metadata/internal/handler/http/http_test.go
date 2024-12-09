@@ -21,7 +21,6 @@ var (
 )
 
 func TestHandler_GetMetadata(t *testing.T) {
-
 	memoryRepo.Put(context.Background(), "1", &model.Metadata{
 		ID:          "1",
 		Title:       "title1",
@@ -48,12 +47,10 @@ func TestHandler_GetMetadata(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-
 		t.Run(tt.name, func(t *testing.T) {
 			tt.h.GetMetadata(tt.args.w, tt.args.r)
 			t.Log(tt.args.w.(*httptest.ResponseRecorder).Result().StatusCode)
 			t.Log(tt.args.w.(*httptest.ResponseRecorder).Body.String())
-
 		})
 	}
 }
@@ -97,15 +94,12 @@ func TestHandler_PutMetadata(t *testing.T) {
 			t.Log(tt.args.w.(*httptest.ResponseRecorder).Result().StatusCode)
 
 			d, err := memoryRepo.Get(context.Background(), "1")
-
 			if err != nil {
 				t.Error(err)
 			}
 			if d.Title != m.Title {
 				t.Error("title not match")
 			}
-
 		})
-
 	}
 }

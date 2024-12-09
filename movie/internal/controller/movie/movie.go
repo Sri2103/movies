@@ -10,9 +10,7 @@ import (
 	ratingmodel "movieexample.com/rating/pkg/model"
 )
 
-var (
-	ErrNotFound = errors.New("movie metadata not found")
-)
+var ErrNotFound = errors.New("movie metadata not found")
 
 // ratingGateway is an interface that provides methods for interacting with a rating system.
 // GetAggregatedRating retrieves the aggregated rating for a given record ID and record type.

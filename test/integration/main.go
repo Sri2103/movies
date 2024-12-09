@@ -39,13 +39,11 @@ func main() {
 	defer movieSrv.GracefulStop()
 	opts := grpc.WithTransportCredentials(insecure.NewCredentials())
 	metadataConn, err := grpc.NewClient(metadataServiceAddr, opts)
-
 	if err != nil {
 		panic(err)
 	}
 	defer metadataConn.Close()
 	ratingConn, err := grpc.NewClient(ratingServiceAddr, opts)
-
 	if err != nil {
 		panic(err)
 	}
@@ -167,7 +165,6 @@ func main() {
 	}
 
 	log.Println("Integration tests passed!")
-
 }
 
 func StartMetadataService(ctx context.Context, registry discovery.Registry) *grpc.Server {
@@ -231,5 +228,4 @@ func StartMovieService(ctx context.Context, registry discovery.Registry) *grpc.S
 		panic(err)
 	}
 	return srv
-
 }

@@ -61,7 +61,6 @@ func (h *Handler) GetMetadata(ctx context.Context, req *gen.GetMetadataRequest) 
 
 // PutMetadata is the GRPC handler for the PutMetadata RPC. It stores the metadata for the specified movie ID, or returns an error if an internal error occurs.
 func (h *Handler) PutMetadata(ctx context.Context, req *gen.PutMetadataRequest) (*gen.PutMetadataResponse, error) {
-
 	ctx, span := otel.Tracer("metadata").Start(ctx, "PutMetadata")
 	defer span.End()
 	if req == nil || req.Metadata == nil {

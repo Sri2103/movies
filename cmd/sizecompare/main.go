@@ -52,5 +52,4 @@ func main() {
 	fmt.Printf("JSON size:\t%dB\n", len(jsonBytes))
 	fmt.Printf("XML size:\t%dB\n", len(xmlBytes))
 	fmt.Printf("Proto size:\t%dB\n", len(protoBytes))
-
 }

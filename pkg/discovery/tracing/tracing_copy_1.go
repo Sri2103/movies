@@ -94,7 +94,6 @@ func enableOpenTelemetryTracing(ctx context.Context, tc *TracingConfig) error {
 		if err := traceProvider.Shutdown(shutdownCtx); err != nil {
 			// logrus.WithError(err).Error("unable to shutdown OpenTelemetry trace provider")
 			panic(err)
-
 		}
 	}()
 
@@ -104,9 +103,7 @@ func enableOpenTelemetryTracing(ctx context.Context, tc *TracingConfig) error {
 	return nil
 }
 
-var (
-	tracingOnce sync.Once
-)
+var tracingOnce sync.Once
 
 // ConfigureTracing sets up global tracing configuration for OpenTracing /
 // OpenTelemetry. The context should be the global context. Cancelling this
@@ -125,15 +122,12 @@ func ConfigureTracing(ctx context.Context, tc *TracingConfig) error {
 					// logrus.WithError(err).Error("unable to start OTLP trace exporter")
 					log.Println("unable to start OTLP trace exporter")
 				}
-
 			}
 		}
 	})
 
 	return err
 }
-
-
 
 type TracingExporter = string
 
@@ -167,10 +161,7 @@ func (tc *TracingConfig) Validate() error {
 	return nil
 }
 
-
-var (
-	cleanupWaitGroup sync.WaitGroup
-)
+var cleanupWaitGroup sync.WaitGroup
 
 // WaitForCleanup waits until all observability long-running goroutines shut
 // down cleanly or until the provided context signals done.

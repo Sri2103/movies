@@ -10,6 +10,7 @@ func BenchmarkSerializeToJSON(b *testing.B) {
 		}
 	}
 }
+
 func BenchmarkSerializeToXML(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := serializeToXML(metadata)

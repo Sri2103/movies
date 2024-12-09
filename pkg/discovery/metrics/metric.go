@@ -22,8 +22,9 @@ func InitMetrics(ctx context.Context, service string) (*metricSdk.MeterProvider,
 
 	otel.SetMeterProvider(provider)
 
-	return provider,nil
+	return provider, nil
 }
+
 func StartMetricsEndPoint(port int) {
 	http.Handle("/metrics", promhttp.Handler())
 	log.Printf("Starting metrics endpoint on port %d", port)

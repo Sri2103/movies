@@ -28,13 +28,11 @@ import (
 const ServiceName = "movie"
 
 func main() {
-
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
 	logger.Info("Starting the movie service")
 
 	f, err := os.Open("./movie/internal/configs/base.yaml")
-
 	if err != nil {
 		logger.Fatal("Failed to open config file", zap.Error(err))
 	}

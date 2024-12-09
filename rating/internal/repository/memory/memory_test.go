@@ -8,9 +8,7 @@ import (
 	"movieexample.com/rating/pkg/model"
 )
 
-var (
-	repo = New()
-)
+var repo = New()
 
 func TestRepository_Get(t *testing.T) {
 	type args struct {
@@ -87,7 +85,6 @@ func TestRepository_Put(t *testing.T) {
 	ratings, err := repo.Get(context.Background(), "1", model.RecordTypeMovie)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(ratings))
-
 }
 
 func TestPutToGet(t *testing.T) {
@@ -99,5 +96,4 @@ func TestPutToGet(t *testing.T) {
 	}
 	err := repo.Put(context.Background(), ratingRecord.MovieID, model.RecordTypeMovie, ratingRecord)
 	assert.NoError(t, err)
-	
 }
