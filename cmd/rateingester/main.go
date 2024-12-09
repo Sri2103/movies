@@ -27,10 +27,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	var timeout = 10 * time.Second
+	timeout := 10 * time.Second
 	fmt.Println("Waiting for all messages to be delivered...")
 	producer.Flush(int(timeout.Milliseconds()))
-
 }
 
 func readRatingsFromFile(fileName string) ([]model.RatingEvent, error) {
