@@ -30,7 +30,12 @@ const ServiceName = "rating"
 func main() {
 
 	logger, _ := zap.NewProduction()
-	defer logger.Sync()
+	defer func() {
+		err := logger.Sync()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 	logger.Info("Starting the rating service")
 
 	f, err := os.Open("./rating/internal/configs/base.yaml")
@@ -52,7 +57,13 @@ func main() {
 	if err != nil {
 		logger.Fatal("Failed to create tracer", zap.Error(err))
 	}
-	defer grpcTracer.Shutdown(ctx)
+	defer func(){
+
+	err :=	grpcTracer.Shutdown(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	}() 
 	otel.SetTracerProvider(grpcTracer)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 
@@ -76,7 +87,13 @@ func main() {
 			time.Sleep(1 * time.Second)
 		}
 	}()
-	defer registry.DeRegister(ctx, instanceID, ServiceName)
+	defer func() {
+
+		err := registry.DeRegister(ctx, instanceID, ServiceName)
+		if err != nil {
+			logger.Fatal("Failed to deregister service", zap.Error(err))
+		}
+	}()
 
 	repo := memory.New()
 
