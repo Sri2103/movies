@@ -29,7 +29,14 @@ const serviceName = "metadata"
 func main() {
 	// logger startup
 	logger, _ := zap.NewProduction()
-	defer logger.Sync()
+
+	defer func() {
+		err := logger.Sync()
+		if err != nil {
+			logger.Fatal(err.Error())
+		}
+	}()
+
 	logger = logger.With(zap.String("service", serviceName))
 
 	// setting up metadata config rom yaml file
