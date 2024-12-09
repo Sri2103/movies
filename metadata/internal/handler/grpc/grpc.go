@@ -64,12 +64,13 @@ func (h *Handler) PutMetadata(ctx context.Context, req *gen.PutMetadataRequest) 
 
 	ctx, span := otel.Tracer("metadata").Start(ctx, "PutMetadata")
 	defer span.End()
-
-	span.SetAttributes(attribute.String("movie_id", req.Metadata.Id))
-
 	if req == nil || req.Metadata == nil {
 		return nil, status.Error(codes.InvalidArgument, "metadata is required")
 	}
+	if req.Metadata.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+	span.SetAttributes(attribute.String("movie_id", req.Metadata.Id))
 	m := model.MetadataFromProto(req.Metadata)
 	span.SetAttributes(attribute.String("movie_id", m.ID))
 	err := h.ctrl.Put(ctx, m)
