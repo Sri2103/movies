@@ -33,7 +33,6 @@ func main() {
 }
 
 func readRatingsFromFile(fileName string) ([]model.RatingEvent, error) {
-	// TODO: Implement this function
 	f, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
