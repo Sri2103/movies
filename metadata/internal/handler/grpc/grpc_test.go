@@ -23,6 +23,7 @@ func TestHandler_GetMetadata(t *testing.T) {
 		ctx context.Context
 		req *gen.GetMetadataRequest
 	}
+
 	tests := []struct {
 		name    string
 		h       *Handler
@@ -30,7 +31,6 @@ func TestHandler_GetMetadata(t *testing.T) {
 		want    *gen.GetMetadataResponse
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
 			name: "test-1",
 			h:    handler,
@@ -51,6 +51,7 @@ func TestHandler_GetMetadata(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// put data into memory store
@@ -65,6 +66,7 @@ func TestHandler_GetMetadata(t *testing.T) {
 			}
 
 			got, err := tt.h.GetMetadata(tt.args.ctx, tt.args.req)
+
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 			t.Log(got, "got metadata")
@@ -77,22 +79,21 @@ func TestHandler_PutMetadata(t *testing.T) {
 		ctx context.Context
 		req *gen.PutMetadataRequest
 	}
+
 	tests := []struct {
 		name    string
 		h       *Handler
 		args    args
 		want    *gen.PutMetadataResponse
 		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
+	}{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.h.PutMetadata(tt.args.ctx, tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Handler.PutMetadata() error = %v, wantErr %v", err, tt.wantErr)
-				return
 			}
+			
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Handler.PutMetadata() = %v, want %v", got, tt.want)
 			}

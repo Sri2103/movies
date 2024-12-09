@@ -13,22 +13,21 @@ func TestRepository_Get(t *testing.T) {
 		in0 context.Context
 		id  string
 	}
+
 	tests := []struct {
 		name    string
 		r       *Repository
 		args    args
 		want    *model.Metadata
 		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
+	}{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.r.Get(tt.args.in0, tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Repository.Get() error = %v, wantErr %v", err, tt.wantErr)
-				return
 			}
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Repository.Get() = %v, want %v", got, tt.want)
 			}
@@ -42,13 +41,13 @@ func TestRepository_Put(t *testing.T) {
 		id  string
 		m   *model.Metadata
 	}
+
 	tests := []struct {
 		name    string
 		r       *Repository
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
 			name: "test1",
 			r: &Repository{
@@ -78,6 +77,7 @@ func TestRepository_Put(t *testing.T) {
 			wantErr: false,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := tt.r.Put(tt.args.in0, tt.args.id, tt.args.m); (err != nil) != tt.wantErr {
@@ -87,7 +87,7 @@ func TestRepository_Put(t *testing.T) {
 	}
 }
 
-// test put and get
+// test put and get.
 func TestRepository_PutAndGet(t *testing.T) {
 	r := New()
 	tests := []struct {
@@ -116,16 +116,19 @@ func TestRepository_PutAndGet(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.r.Put(context.Background(), tt.m.ID, tt.m)
 			if err != nil {
 				t.Errorf("Repository.Put() error = %v", err)
 			}
+
 			m, err := tt.r.Get(context.Background(), tt.m.ID)
 			if err != nil {
 				t.Errorf("Repository.Get() error = %v", err)
 			}
+
 			if !reflect.DeepEqual(m, tt.m) {
 				t.Errorf("Repository.Get() = %v, want %v", m, tt.m)
 			}

@@ -32,21 +32,27 @@ func New(ctrl *metadata.Controller) *Handler {
 // response. Otherwise, it encodes the metadata as JSON and writes it to the response.
 func (h *Handler) GetMetadata(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("id")
+
 	if id == "" {
 		w.WriteHeader(http.StatusBadRequest)
+
 		return
 	}
+
 	ctx := r.Context()
+
 	m, err := h.ctrl.Get(ctx, id)
 	if err != nil && errors.Is(err, metadata.ErrNotFound) {
 		log.Printf("Repository got err: %v", err)
 		w.WriteHeader(http.StatusNotFound)
+
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(m); err != nil {
 		log.Printf("Failed to encode metadata: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
+
 		return
 	}
 }
@@ -57,15 +63,20 @@ func (h *Handler) GetMetadata(w http.ResponseWriter, r *http.Request) {
 // If there is an error updating the metadata, it returns a 500 Internal Server Error response.
 func (h *Handler) PutMetadata(w http.ResponseWriter, r *http.Request) {
 	var m *model.Metadata
+
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		log.Printf("Failed to decode metadata: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
+
 		return
 	}
+
 	ctx := r.Context()
+
 	if err := h.ctrl.Put(ctx, m); err != nil {
 		log.Printf("Failed to put metadata: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
+
 		return
 	}
 }

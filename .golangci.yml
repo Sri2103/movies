@@ -6,4 +6,4 @@ linters:
     - depguard
     - testpackage
     - funlen
-    # - gci
+    - gci

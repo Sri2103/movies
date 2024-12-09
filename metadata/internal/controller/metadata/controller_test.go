@@ -52,7 +52,7 @@ func TestController(t *testing.T) {
 	}
 }
 
-// put and get data to memory repository
+// put and get data to memory repository.
 func TestControllerPut(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

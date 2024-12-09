@@ -27,16 +27,17 @@ func TestHandler_GetMetadata(t *testing.T) {
 		Description: "description1",
 		Director:    "director1",
 	})
+
 	type args struct {
 		w http.ResponseWriter
 		r *http.Request
 	}
+
 	tests := []struct {
 		name string
 		h    *Handler
 		args args
 	}{
-		// TODO: Add test cases.
 		{
 			name: "test1",
 			h:    handler,
@@ -48,9 +49,14 @@ func TestHandler_GetMetadata(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			recorder, ok := tt.args.w.(*httptest.ResponseRecorder)
+			if !ok {
+				t.Fatal("not ok")
+			}
+
 			tt.h.GetMetadata(tt.args.w, tt.args.r)
-			t.Log(tt.args.w.(*httptest.ResponseRecorder).Result().StatusCode)
-			t.Log(tt.args.w.(*httptest.ResponseRecorder).Body.String())
+			t.Log(recorder.Result().StatusCode)
+			t.Log(recorder.Body.String())
 		})
 	}
 }
@@ -60,12 +66,12 @@ func TestHandler_PutMetadata(t *testing.T) {
 		w http.ResponseWriter
 		r *http.Request
 	}
+
 	tests := []struct {
 		name string
 		h    *Handler
 		args args
 	}{
-		// TODO: Add test cases.
 		{
 			name: "test1",
 			h:    handler,
@@ -88,15 +94,23 @@ func TestHandler_PutMetadata(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			tt.args.r.Body = io.NopCloser(bytes.NewReader(jsonData))
+
+			recorder, ok := tt.args.w.(*httptest.ResponseRecorder)
+			if !ok {
+				t.Fatal("failed to get response recorder")
+			}
+
 			tt.h.PutMetadata(tt.args.w, tt.args.r)
 
-			t.Log(tt.args.w.(*httptest.ResponseRecorder).Result().StatusCode)
+			t.Log(recorder.Result().StatusCode)
 
 			d, err := memoryRepo.Get(context.Background(), "1")
 			if err != nil {
 				t.Error(err)
 			}
+
 			if d.Title != m.Title {
 				t.Error("title not match")
 			}

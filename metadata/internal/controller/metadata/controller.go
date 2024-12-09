@@ -36,7 +36,7 @@ func New(repo metadataRepository) *Controller {
 }
 
 // Get retrieves a metadata record by its ID. The context parameter is used to control the lifetime of the request.
-// The id parameter is the unique identifier of the metadata record to retrieve. It returns the metadata record and an error
+// The id parameter is the unique identifier of the metadata record to retrieve.
 // if the record is not found or there is another error.
 func (c *Controller) Get(ctx context.Context, id string) (*model.Metadata, error) {
 	ctx, span := otel.Tracer("").Start(ctx, "GetController")
@@ -55,5 +55,6 @@ func (c *Controller) Get(ctx context.Context, id string) (*model.Metadata, error
 func (c *Controller) Put(ctx context.Context, m *model.Metadata) error {
 	ctx, span := otel.Tracer("").Start(ctx, "PutController")
 	defer span.End()
+
 	return c.repo.Put(ctx, m.ID, m)
 }

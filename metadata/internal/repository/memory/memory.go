@@ -34,6 +34,7 @@ func (r *Repository) Get(ctx context.Context, id string) (*model.Metadata, error
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
+
 	return m, nil
 }
 

@@ -37,10 +37,12 @@ func (h *Handler) GetMetadata(ctx context.Context, req *gen.GetMetadataRequest) 
 	defer span.End()
 
 	meter := otel.Meter("metadata.grpc.GetMetadata")
+
 	counter, err := meter.Int64Counter("metadata.grpc.GetMetadata.counter")
 	if err != nil {
 		return nil, err
 	}
+
 	counter.Add(ctx, 1, nil)
 
 	if req == nil || req.MovieId == "" {
@@ -48,33 +50,44 @@ func (h *Handler) GetMetadata(ctx context.Context, req *gen.GetMetadataRequest) 
 	}
 
 	span.SetAttributes(attribute.String("movie_id", req.MovieId))
+
 	m, err := h.ctrl.Get(ctx, req.MovieId)
 	if err != nil && errors.Is(err, metadata.ErrNotFound) {
 		return nil, status.Error(codes.NotFound, "metadata not found")
 	} else if err != nil {
 		return nil, status.Error(codes.Internal, "failed to get metadata")
 	}
+
 	return &gen.GetMetadataResponse{
 		Metadata: model.MetadataToProto(m),
 	}, nil
 }
 
-// PutMetadata is the GRPC handler for the PutMetadata RPC. It stores the metadata for the specified movie ID, or returns an error if an internal error occurs.
+// PutMetadata is the handler for the PutMetadata RPC. It stores the metadata for the specified movie ID,
+//
+//	or returns an error.
 func (h *Handler) PutMetadata(ctx context.Context, req *gen.PutMetadataRequest) (*gen.PutMetadataResponse, error) {
 	ctx, span := otel.Tracer("metadata").Start(ctx, "PutMetadata")
 	defer span.End()
+
 	if req == nil || req.Metadata == nil {
 		return nil, status.Error(codes.InvalidArgument, "metadata is required")
 	}
+
 	if req.Metadata.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
+
 	span.SetAttributes(attribute.String("movie_id", req.Metadata.Id))
+
 	m := model.MetadataFromProto(req.Metadata)
+
 	span.SetAttributes(attribute.String("movie_id", m.ID))
+
 	err := h.ctrl.Put(ctx, m)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to put metadata")
 	}
+
 	return &gen.PutMetadataResponse{}, nil
 }
