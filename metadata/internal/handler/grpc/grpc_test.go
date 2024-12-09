@@ -93,7 +93,7 @@ func TestHandler_PutMetadata(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Handler.PutMetadata() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Handler.PutMetadata() = %v, want %v", got, tt.want)
 			}
