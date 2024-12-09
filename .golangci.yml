@@ -1,0 +1,9 @@
+linters:
+  enable-all: true
+  disable-all: false
+  fast: true
+  disable:
+    - depguard
+    - testpackage
+    - funlen
+    # - gci

@@ -40,9 +40,11 @@ func main() {
 	}
 
 	var cfg *config.Config
+
 	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
 		logger.Fatal("Failed to parse configuration:%w", zap.Error(err))
 	}
+
 	port := cfg.API.Port
 
 	logger.Info("Starting the metadata service", zap.Int("port", port))
@@ -88,7 +90,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	instanceID := discovery.GenerateInstanceID(serviceName)
+
 	if err := consulRegistry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", port)); err != nil {
 		panic(err)
 	}
@@ -99,15 +103,23 @@ func main() {
 			if err := consulRegistry.ReportHealthState(instanceID, serviceName); err != nil {
 				logger.Error("Failed to report healthy state", zap.Error(err))
 			}
+
 			time.Sleep(1 * time.Second)
 		}
 	}()
-	defer consulRegistry.DeRegister(ctx, instanceID, serviceName)
+
+	defer func() {
+		err := consulRegistry.DeRegister(ctx, instanceID, serviceName)
+		if err != nil {
+			logger.Error("Failed to deregister service", zap.Error(err))
+		}
+	}()
 
 	// setting up repository
 	repo := memory.New()
 	ctrl := metadata.New(repo)
 	h := grpchandler.New(ctrl)
+
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
 	if err != nil {
 		logger.Fatal("Failed to listen", zap.Error(err))
@@ -123,6 +135,7 @@ func main() {
 	// grpc.NewServer(grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()))
 	reflection.Register(srv)
 	gen.RegisterMetadataServiceServer(srv, h)
+
 	if err := srv.Serve(lis); err != nil {
 		panic(err)
 	}

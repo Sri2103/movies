@@ -9,9 +9,7 @@ import (
 	"movieexample.com/metadata/pkg/model"
 )
 
-var (
-	ErrNotFound = errors.New("not found")
-)
+var ErrNotFound = errors.New("not found")
 
 // metadataRepository defines the interface for interacting with the metadata repository.
 // The Get method retrieves a metadata record by its ID.
@@ -50,6 +48,7 @@ func (c *Controller) Get(ctx context.Context, id string) (*model.Metadata, error
 	} else if err != nil {
 		return nil, err
 	}
+
 	return res, nil
 }
 
