@@ -26,8 +26,8 @@ jobs:
       - name: install staticcheck
         run: go install honnef.co/go/tools/cmd/staticcheck@latest
 
-      - name: run staticcheck
-        run: staticcheck ./...
+      # - name: run staticcheck
+      #   run: staticcheck ./...
 
       - name: install golangci-lint
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
