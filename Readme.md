@@ -38,7 +38,7 @@ A robust, distributed movie platform built with a microservices architecture, im
 
 ---
 
-````mermaid
+mermaid
 graph LR
     A[Movie Service] -->|gRPC| B[Rating Service]
     A -->|gRPC| C[Movie Metadata Service]
