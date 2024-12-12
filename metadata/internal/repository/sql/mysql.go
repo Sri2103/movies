@@ -5,12 +5,14 @@ import (
 	"database/sql"
 
 	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver
+	dbGen "movieexample.com/gen/db"
 	"movieexample.com/metadata/internal/repository"
 	"movieexample.com/metadata/pkg/model"
 )
 
 type Repository struct {
 	db *sql.DB
+	q  dbGen.Queries
 }
 
 // New creates a new MySQL repository.
@@ -21,7 +23,7 @@ func New() (*Repository, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Repository{db: db}, nil
+	return &Repository{db: db, q: *dbGen.New(db)}, nil
 }
 
 // Get retrieves the metadata for the movie with the given ID from the database.
@@ -46,7 +48,17 @@ func (r *Repository) Get(ctx context.Context, id string) (*model.Metadata, error
 
 // Put adds movie metadata for a given movie id.
 func (r *Repository) Put(ctx context.Context, id string, metadata *model.Metadata) error {
-	_, err := r.db.ExecContext(ctx, "INSERT INTO movies (id, title, description, director) VALUES (?, ?, ?, ?)",
-		id, metadata.Title, metadata.Description, metadata.Director)
+	_, err := r.q.InsertMovie(ctx, dbGen.InsertMovieParams{
+		ID:          id,
+		Title:       sql.NullString{String: metadata.Title, Valid: metadata.Title != ""},
+		Description: sql.NullString{String: metadata.Description, Valid: metadata.Description != ""},
+		Director:    sql.NullString{String: metadata.Director, Valid: metadata.Director != ""},
+	})
 	return err
 }
+
+// func (r *Repository) Put(ctx context.Context, id string, metadata *model.Metadata) error {
+// 	_, err := r.db.ExecContext(ctx, "INSERT INTO movies (id, title, description, director) VALUES (?, ?, ?, ?)",
+// 		id, metadata.Title, metadata.Description, metadata.Director)
+// 	return err
+// }

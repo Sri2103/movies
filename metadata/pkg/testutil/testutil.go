@@ -8,8 +8,11 @@ import (
 )
 
 // NewTestMetadataGRPCServer creates a new metadata gRPC server to be used in tests.
-func NewTestMetadataGRPCServer() gen.MetadataServiceServer {
-	r := memory.New()
+func NewTestMetadataGRPCServer(repo metadata.Repository) gen.MetadataServiceServer {
+	if repo == nil {
+		repo = memory.New()
+	}
+	r := repo
 	ctrl := metadata.New(r)
 
 	return grpchandler.New(ctrl)

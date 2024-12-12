@@ -13,7 +13,7 @@ var ErrNotFound = errors.New("not found")
 
 // metadataRepository defines the interface for interacting with the metadata repository.
 // The Get method retrieves a metadata record by its ID.
-type metadataRepository interface {
+type Repository interface {
 	// Get retrieves a metadata record by its ID.
 	// The context parameter is used to control the lifetime of the request.
 	// The id parameter is the unique identifier of the metadata record to retrieve.
@@ -24,12 +24,12 @@ type metadataRepository interface {
 
 // Controller is a struct that holds a metadataRepository, which is used to interact with the metadata repository.
 type Controller struct {
-	repo metadataRepository
+	repo Repository
 }
 
 // New creates a new instance of the Controller struct, which holds a metadataRepository
 // that is used to interact with the metadata repository.
-func New(repo metadataRepository) *Controller {
+func New(repo Repository) *Controller {
 	return &Controller{
 		repo: repo,
 	}

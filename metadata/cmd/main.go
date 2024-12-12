@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -19,6 +20,7 @@ import (
 	"movieexample.com/metadata/internal/controller/metadata"
 	grpchandler "movieexample.com/metadata/internal/handler/grpc"
 	"movieexample.com/metadata/internal/repository/memory"
+	mysql "movieexample.com/metadata/internal/repository/sql"
 	"movieexample.com/pkg/discovery"
 	"movieexample.com/pkg/discovery/consul"
 	"movieexample.com/pkg/discovery/tracing"
@@ -28,6 +30,9 @@ const serviceName = "metadata"
 
 func main() {
 	// logger startup
+	var env string
+	flag.StringVar(&env, "env", "dev", "environment")
+	flag.Parse()
 	logger, _ := zap.NewProduction()
 
 	defer func() {
@@ -82,14 +87,6 @@ func main() {
 		}
 	}()
 
-	// setting up metrics -2
-	// mp, err := metrics.InitMetrics(ctx, serviceName)
-	// if err != nil {
-	// 	logger.Fatal("Failed to initialize metrics", zap.Error(err))
-	// }
-	// defer mp.Shutdown(ctx)
-	// go metrics.StartMetricsEndPoint(cfg.Prometheus.MetricsPort)
-
 	otel.SetTracerProvider(tp)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
 
@@ -122,8 +119,19 @@ func main() {
 		}
 	}()
 
+	// setting up repository Env
+	var repo metadata.Repository
+	if env == "dev" {
+		repo = memory.New()
+	} else {
+		repo, err = mysql.New()
+		logger.Info("Connected to mysql")
+		if err != nil {
+			logger.Fatal("Failed to initialize mysql", zap.Error(err))
+		}
+	}
+
 	// setting up repository
-	repo := memory.New()
 	ctrl := metadata.New(repo)
 	h := grpchandler.New(ctrl)
 

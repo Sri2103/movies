@@ -10,7 +10,7 @@ import (
 )
 
 func SetUpTracing(ctx context.Context, serviceName string) (*tracesdk.TracerProvider, error) {
-	exp, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint("localhost:4317"))
+	exp, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint("127.0.0.1:4317"))
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func SetUpTracing(ctx context.Context, serviceName string) (*tracesdk.TracerProv
 	tp := tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(exp),
 		tracesdk.WithResource(resources),
-		tracesdk.WithSampler(tracesdk.ParentBased(tracesdk.TraceIDRatioBased(0.6))),
+		tracesdk.WithSampler(tracesdk.AlwaysSample()),
 	)
 	return tp, nil
 }

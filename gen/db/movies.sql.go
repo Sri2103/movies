@@ -3,7 +3,7 @@
 //   sqlc v1.26.0
 // source: movies.sql
 
-package db
+package dbGen
 
 import (
 	"context"
@@ -14,7 +14,7 @@ const getMovie = `-- name: GetMovie :one
 SELECT
     id, title, description, director
 FROM
-    movie
+    Movie
 WHERE
     "id" = ?
 `
@@ -33,17 +33,23 @@ func (q *Queries) GetMovie(ctx context.Context, dollar_1 interface{}) (Movie, er
 
 const insertMovie = `-- name: InsertMovie :execresult
 insert into
-    movie (title, description, director)
+    Movie (id, title, description, director)
 values
-    (?, ?, ?)
+    (?, ?, ?, ?)
 `
 
 type InsertMovieParams struct {
+	ID          string
 	Title       sql.NullString
 	Description sql.NullString
 	Director    sql.NullString
 }
 
 func (q *Queries) InsertMovie(ctx context.Context, arg InsertMovieParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, insertMovie, arg.Title, arg.Description, arg.Director)
+	return q.db.ExecContext(ctx, insertMovie,
+		arg.ID,
+		arg.Title,
+		arg.Description,
+		arg.Director,
+	)
 }

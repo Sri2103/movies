@@ -2,12 +2,12 @@
 SELECT
     *
 FROM
-    movie
+    Movie
 WHERE
     "id" = ?;
 
 -- name: InsertMovie :execresult
 insert into
-    movie (title, description, director)
+    Movie (id, title, description, director)
 values
-    (?, ?, ?);
+    (?, ?, ?, ?);

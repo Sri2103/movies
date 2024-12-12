@@ -169,7 +169,7 @@ func main() {
 
 func StartMetadataService(ctx context.Context, registry discovery.Registry) *grpc.Server {
 	log.Println("Starting metadata service on :", metadataServiceAddr)
-	h := metadatatest.NewTestMetadataGRPCServer()
+	h := metadatatest.NewTestMetadataGRPCServer(nil)
 	l, err := net.Listen("tcp", metadataServiceAddr)
 	if err != nil {
 		log.Fatal(err)
