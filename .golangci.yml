@@ -7,6 +7,15 @@ linters:
     - goimports
     - ineffassign
     - unused
+    - gochecknoglobals
+    - goconst
+    - gofmt
+    - gofumpt
+    - usestdlibvars
+    - tagalign
+    - sqlclosecheck
+    - revive
+
     # - cyclop
 
 run:

@@ -36,8 +36,7 @@ func TestControllerAgg(t *testing.T) {
 	c := rating.NewController(repoMock, nil)
 	ctx := context.Background()
 	id := "id"
-	var ratings []model.Rating
-	ratings = []model.Rating{
+	ratings := []model.Rating{
 		{
 			UserID: model.UserID(id),
 			Value:  5,
