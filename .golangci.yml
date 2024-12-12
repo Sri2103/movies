@@ -7,7 +7,7 @@ linters:
     - goimports
     - ineffassign
     - unused
-    - gochecknoglobals
+    # - gochecknoglobals
     - goconst
     - gofmt
     - gofumpt

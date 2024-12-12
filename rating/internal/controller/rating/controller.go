@@ -61,13 +61,13 @@ func (c *Controller) PutRating(ctx context.Context, recordID model.RecordID, rec
 	return c.repo.Put(ctx, recordID, recordType, rating)
 }
 
-func (s *Controller) StartIngestion(ctx context.Context) error {
-	ch, err := s.ingester.Ingest(ctx)
+func (c *Controller) StartIngestion(ctx context.Context) error {
+	ch, err := c.ingester.Ingest(ctx)
 	if err != nil {
 		return err
 	}
 	for e := range ch {
-		if err := s.PutRating(ctx, e.RecordID, e.RecordType, &model.Rating{UserID: e.UserID, Value: e.Value}); err != nil {
+		if err := c.PutRating(ctx, e.RecordID, e.RecordType, &model.Rating{UserID: e.UserID, Value: e.Value}); err != nil {
 			return err
 		}
 	}

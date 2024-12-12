@@ -33,7 +33,7 @@ func ObtainMetricCounter(name, desc string) metric.Int64Counter {
 	return counter
 }
 
-func enablePrometheusMetrics(ctx context.Context, mc *MetricsConfig) error {
+func enablePrometheusMetrics(ctx context.Context, mc *Config) error {
 	exporter, err := prometheus.New()
 	if err != nil {
 		return err
@@ -87,7 +87,7 @@ func enablePrometheusMetrics(ctx context.Context, mc *MetricsConfig) error {
 	return nil
 }
 
-func enableOpenTelemetryMetrics(ctx context.Context, mc *MetricsConfig) error {
+func enableOpenTelemetryMetrics(ctx context.Context, mc *Config) error {
 	switch mc.ExporterProtocol {
 	case "grpc":
 		metricExporter, err := otlpmetricgrpc.New(ctx)
@@ -155,9 +155,9 @@ func enableOpenTelemetryMetrics(ctx context.Context, mc *MetricsConfig) error {
 	return nil
 }
 
-var metricsOnce *sync.Once = &sync.Once{}
+var metricsOnce = &sync.Once{}
 
-func ConfigureMetrics(ctx context.Context, mc *MetricsConfig) error {
+func ConfigureMetrics(ctx context.Context, mc *Config) error {
 	if ctx == nil {
 		panic("context must not be nil")
 	}
@@ -219,17 +219,17 @@ func WaitForCleanup(ctx context.Context) {
 	utilities.WaitForCleanup(ctx, &cleanupWaitGroup)
 }
 
-type MetricsExporter = string
+type Exporter string
 
 const (
-	Prometheus           MetricsExporter = "prometheus"
-	OpenTelemetryMetrics MetricsExporter = "opentelemetry"
+	Prometheus           Exporter = "prometheus"
+	OpenTelemetryMetrics Exporter = "opentelemetry"
 )
 
-type MetricsConfig struct {
+type Config struct {
 	Enabled bool
 
-	Exporter MetricsExporter `default:"opentelemetry"`
+	Exporter Exporter `default:"opentelemetry"`
 
 	// ExporterProtocol is the OTEL_EXPORTER_OTLP_PROTOCOL env variable,
 	// only available when exporter is opentelemetry. See:
@@ -237,9 +237,9 @@ type MetricsConfig struct {
 	ExporterProtocol string `default:"http/protobuf" envconfig:"OTEL_EXPORTER_OTLP_PROTOCOL"`
 
 	PrometheusListenHost string `default:"0.0.0.0" envconfig:"OTEL_EXPORTER_PROMETHEUS_HOST"`
-	PrometheusListenPort string `default:"9100" envconfig:"OTEL_EXPORTER_PROMETHEUS_PORT"`
+	PrometheusListenPort string `default:"9100"    envconfig:"OTEL_EXPORTER_PROMETHEUS_PORT"`
 }
 
-func (mc MetricsConfig) Validate() error {
+func (mc Config) Validate() error {
 	return nil
 }

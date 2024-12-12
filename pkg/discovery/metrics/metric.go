@@ -12,7 +12,7 @@ import (
 	metricSdk "go.opentelemetry.io/otel/sdk/metric"
 )
 
-func InitMetrics(ctx context.Context, service string) (*metricSdk.MeterProvider, error) {
+func InitMetrics(_ context.Context, _ string) (*metricSdk.MeterProvider, error) {
 	exporter, err := prometheus.New()
 	if err != nil {
 		return nil, err

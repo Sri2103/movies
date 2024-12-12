@@ -37,7 +37,7 @@ func NewRegistry() *Registry {
 // It adds the service instance to the registry, creating a new entry for the serviceName if necessary.
 // The lastActive field of the service instance is set to the current time.
 // The function returns nil on success.
-func (r *Registry) Register(ctx context.Context, instanceID string, serviceName string, hostPort string) error {
+func (r *Registry) Register(_ context.Context, instanceID string, serviceName string, hostPort string) error {
 	r.Lock()
 	defer r.Unlock()
 	if _, ok := r.serviceAddrs[serviceName]; !ok {
@@ -53,7 +53,7 @@ func (r *Registry) Register(ctx context.Context, instanceID string, serviceName 
 // DeRegister removes the service instance with the given instanceID and serviceName from the registry.
 // If the service name no longer has any registered instances, the service name is also removed from the registry.
 // The function returns nil on success.
-func (r *Registry) DeRegister(ctx context.Context, instanceID string, serviceName string) error {
+func (r *Registry) DeRegister(_ context.Context, instanceID string, serviceName string) error {
 	r.Lock()
 	defer r.Unlock()
 	if _, ok := r.serviceAddrs[serviceName]; ok {
@@ -69,7 +69,7 @@ func (r *Registry) DeRegister(ctx context.Context, instanceID string, serviceNam
 // It retrieves the service instances from the registry, filters out any instances that have been inactive
 // for more than 5 seconds, and returns the host:port addresses of the remaining active instances.
 // If no service instances are found for the given serviceName, it returns discovery.ErrNotFound.
-func (r *Registry) ServiceAddresses(ctx context.Context, serviceName string) ([]string, error) {
+func (r *Registry) ServiceAddresses(_ context.Context, serviceName string) ([]string, error) {
 	r.RLock()
 	defer r.RUnlock()
 	serviceAddrs, ok := r.serviceAddrs[serviceName]
@@ -86,7 +86,7 @@ func (r *Registry) ServiceAddresses(ctx context.Context, serviceName string) ([]
 	return addresses, nil
 }
 
-func (r *Registry) ReportHealthState(instanceID string, serviceName string) error {
+func (r *Registry) ReportHealthState(serviceName string) error {
 	r.Lock()
 	defer r.Unlock()
 	if _, ok := r.serviceAddrs[serviceName]; !ok {

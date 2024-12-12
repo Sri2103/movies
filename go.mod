@@ -1,13 +1,10 @@
 module movieexample.com
 
-go 1.22.7
-
-toolchain go1.22.10
+go 1.23.4
 
 require github.com/hashicorp/consul/api v1.30.0
 
 require (
-	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/go-cmp v0.6.0
 	github.com/prometheus/client_golang v1.20.5

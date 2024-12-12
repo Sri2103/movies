@@ -149,7 +149,7 @@ func main() {
 	}
 
 	log.Println("Retrieving update movie details via movie service")
-	wantMovieDetails_2 := &gen.MovieDetails{
+	wantMovieDetailsTwo := &gen.MovieDetails{
 		Metadata: m,
 		Rating:   getAggregatedRatingResponse.RatingValue,
 	}
@@ -160,7 +160,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to retrieve movie details: %v", err)
 	}
-	if diff := cmp.Diff(getMovieDetailsRes.MovieDetails, wantMovieDetails_2, cmpopts.IgnoreUnexported(gen.MovieDetails{}, gen.Metadata{})); diff != "" {
+	if diff := cmp.Diff(getMovieDetailsRes.MovieDetails, wantMovieDetailsTwo, cmpopts.IgnoreUnexported(gen.MovieDetails{}, gen.Metadata{})); diff != "" {
 		log.Fatalf("Movie details mismatch (-want +got):\n%s", diff)
 	}
 

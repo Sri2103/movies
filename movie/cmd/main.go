@@ -74,7 +74,7 @@ func main() {
 
 	go func() {
 		for {
-			if err := registry.ReportHealthState(instanceID, ServiceName); err != nil {
+			if err := registry.ReportHealthState(instanceID); err != nil {
 				log.Printf("Failed to report healthy state: %s", err)
 			}
 			time.Sleep(1 * time.Second)
@@ -82,7 +82,7 @@ func main() {
 	}()
 
 	defer func() {
-		if err := registry.ReportHealthState(instanceID, ServiceName); err != nil {
+		if err := registry.ReportHealthState(instanceID); err != nil {
 			log.Printf("Failed to report unhealthy state: %s", err)
 		}
 	}()

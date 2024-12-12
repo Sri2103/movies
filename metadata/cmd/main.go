@@ -107,7 +107,7 @@ func main() {
 	// reporting healthy state
 	go func() {
 		for {
-			if err := consulRegistry.ReportHealthState(instanceID, serviceName); err != nil {
+			if err := consulRegistry.ReportHealthState(instanceID); err != nil {
 				logger.Error("Failed to report healthy state", zap.Error(err))
 			}
 

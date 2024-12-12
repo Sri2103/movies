@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	// Import the MySQL driver
 	_ "github.com/go-sql-driver/mysql"
 	"movieexample.com/rating/internal/repository"
 	"movieexample.com/rating/pkg/model"

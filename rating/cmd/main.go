@@ -124,7 +124,7 @@ func registerConsul(ctx context.Context, registry discovery.Registry, instanceID
 	}
 	go func() {
 		for {
-			if err := registry.ReportHealthState(instanceID, serviceName); err != nil {
+			if err := registry.ReportHealthState(serviceName); err != nil {
 				log.Printf("Failed to report healthy state: %s", err)
 			}
 			time.Sleep(1 * time.Second)

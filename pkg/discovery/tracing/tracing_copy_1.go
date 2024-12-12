@@ -38,7 +38,7 @@ func openTelemetryResource() *sdkresource.Resource {
 	return mergedResource
 }
 
-func enableOpenTelemetryTracing(ctx context.Context, tc *TracingConfig) error {
+func enableOpenTelemetryTracing(ctx context.Context, tc *Config) error {
 	var (
 		err           error
 		traceExporter *otlptrace.Exporter
@@ -108,7 +108,7 @@ var tracingOnce sync.Once
 // ConfigureTracing sets up global tracing configuration for OpenTracing /
 // OpenTelemetry. The context should be the global context. Cancelling this
 // context will cancel tracing collection.
-func ConfigureTracing(ctx context.Context, tc *TracingConfig) error {
+func ConfigureTracing(ctx context.Context, tc *Config) error {
 	if ctx == nil {
 		panic("context must not be nil")
 	}
@@ -129,15 +129,15 @@ func ConfigureTracing(ctx context.Context, tc *TracingConfig) error {
 	return err
 }
 
-type TracingExporter = string
+type Exporter = string
 
 const (
-	OpenTelemetryTracing TracingExporter = "opentelemetry"
+	OpenTelemetryTracing Exporter = "opentelemetry"
 )
 
-type TracingConfig struct {
+type Config struct {
 	Enabled  bool
-	Exporter TracingExporter `default:"opentelemetry"`
+	Exporter Exporter `default:"opentelemetry"`
 
 	// ExporterProtocol is the OTEL_EXPORTER_OTLP_PROTOCOL env variable,
 	// only available when exporter is opentelemetry. See:
@@ -157,7 +157,7 @@ type TracingConfig struct {
 	Tags map[string]string
 }
 
-func (tc *TracingConfig) Validate() error {
+func (tc *Config) Validate() error {
 	return nil
 }
 

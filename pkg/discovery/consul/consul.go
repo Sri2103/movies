@@ -29,7 +29,7 @@ func NewRegistry(address string) (*Registry, error) {
 
 // Register registers a service with the Consul agent. It takes the context, an instance ID, a service name, and a host:port string.
 // It returns an error if the host:port format is invalid or if there is an error registering the service with Consul.
-func (r *Registry) Register(ctx context.Context, instanceID string, serviceName string, hostPort string) error {
+func (r *Registry) Register(_ context.Context, instanceID string, serviceName string, hostPort string) error {
 	parts := strings.Split(hostPort, ":")
 	if len(parts) != 2 {
 		return errors.New("invalid host:port format, example: localhost:8081")
@@ -53,14 +53,14 @@ func (r *Registry) Register(ctx context.Context, instanceID string, serviceName 
 
 // DeRegister deregisters a service from the Consul agent. It takes the context, an instance ID, and a service name.
 // It returns an error if there is an error deregistering the service with Consul.
-func (r *Registry) DeRegister(ctx context.Context, instanceID string, serviceName string) error {
+func (r *Registry) DeRegister(_ context.Context, instanceID string, _ string) error {
 	return r.client.Agent().ServiceDeregister(instanceID)
 }
 
 // ServiceAddresses returns a list of service addresses for the given service ID.
 // It queries the Consul agent for healthy service instances and returns their
 // host:port addresses. If no service instances are found, it returns an error.
-func (r *Registry) ServiceAddresses(ctx context.Context, serviceID string) ([]string, error) {
+func (r *Registry) ServiceAddresses(_ context.Context, serviceID string) ([]string, error) {
 	services, _, err := r.client.Health().Service(serviceID, "", true, nil)
 	if err != nil {
 		return nil, err
@@ -77,6 +77,6 @@ func (r *Registry) ServiceAddresses(ctx context.Context, serviceID string) ([]st
 // ReportHealthyState reports the healthy state of a service instance to the Consul agent.
 // It takes the instance ID and service name, and passes the TTL for the service's health check.
 // This allows the Consul agent to mark the service instance as healthy.
-func (r *Registry) ReportHealthState(instanceID string, serviceName string) error {
+func (r *Registry) ReportHealthState(instanceID string) error {
 	return r.client.Agent().PassTTL(instanceID, "")
 }
