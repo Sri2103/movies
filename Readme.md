@@ -29,12 +29,14 @@ A robust, distributed movie platform built with a microservices architecture, im
 
 ## Technical Stack
 
+- **Language**: Golang
 - **Service Discovery**: Consul
 - **Tracing**: Jaeger
 - **Communication**: gRPC
 - **Testing**: Test-Driven Development (TDD) with comprehensive test suites
 - **Architecture**: Domain-Driven Design (DDD)
 - **Observability**: Distributed tracing and metrics collection
+- **Data Storage**: MySQL
 
 ---
 
@@ -48,7 +50,6 @@ graph LR
     E[Jaeger] -->|Tracing| A
     E -->|Tracing| B
     E -->|Tracing| C
-
 
 ## Service Communication Flow
 
@@ -83,21 +84,60 @@ The communication between services follows a structured flow, ensuring robust in
 ## Getting Started
 
 ### Prerequisites
+
 - Docker and Docker Compose
 - gRPC tools
 - Consul and Jaeger setup
 
 ### Setup Instructions
+
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-repo/movie-platform-microservices.git
+
+   git clone <https://github.com/Sri2103/movies.git>
    cd movie-platform-microservices
-````
 
 2. Start the services using Docker Compose:
 
-   ```bash
    docker-compose up --build
+
+   ``` bash
+   docker run -d \
+   -p 8500:8500 \
+   -p 8600:8600/udp \
+   -p 8300:8300 \
+   -p 8301:8301 \
+   -p 8301:8301/udp \
+   -p 8302:8302 \
+   -p 8302:8302/udp \
+   --name=dev-consul \
+   -e CONSUL_BIND_INTERFACE=eth0 \
+   hashicorp/consul:latest agent -server -ui \
+   -node=server-1 -bootstrap-expect=1 \
+   -client=0.0.0.0
+
+   ```
+
+   ``` bash
+
+   docker run -d --name jaeger \
+
+   -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
+   -p 6831:6831/udp \
+   -p 6832:6832/udp \
+   -p 5778:5778 \
+   -p 16686:16686 \
+   -p 4317:4317 \
+   -p 4318:4318 \
+   -p 14250:14250 \
+   -p 14268:14268 \
+   -p 14269:14269 \
+   -p 9411:9411 \
+   jaegertracing/all-in-one:latest
+
+   ```
+
+   ``` bash
+   docker run --name movieexample_db -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=movieexample -p 3306:3306 -d mysql:latest
    ```
 
 3. Access the system:
@@ -106,9 +146,8 @@ The communication between services follows a structured flow, ensuring robust in
    - **Jaeger UI**: `http://localhost:16686`
 
 4. Run tests:
-   ```bash
+
    npm test
-   ```
 
 ---
 
@@ -166,13 +205,13 @@ Provides supplementary information about movies, such as genres, cast, and runti
 
 1. Fork the repository.
 2. Create a feature branch:
-   ```bash
+
    git checkout -b feature/your-feature
-   ```
+
 3. Commit your changes and push them to the branch:
-   ```bash
+
    git push origin feature/your-feature
-   ```
+
 4. Submit a pull request for review.
 
 ---
