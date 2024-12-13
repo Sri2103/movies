@@ -2,16 +2,15 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"net"
 	"os"
 	"time"
 
+	"github.com/spf13/viper"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -20,21 +19,44 @@ import (
 	config "movieexample.com/metadata/configs"
 	"movieexample.com/metadata/internal/controller/metadata"
 	grpchandler "movieexample.com/metadata/internal/handler/grpc"
-	"movieexample.com/metadata/internal/repository/memory"
+	memoryRepo "movieexample.com/metadata/internal/repository/memory"
 	mysql "movieexample.com/metadata/internal/repository/sql"
 	"movieexample.com/pkg/discovery"
 	"movieexample.com/pkg/discovery/consul"
+	memoryDiscovery "movieexample.com/pkg/discovery/memory"
 	"movieexample.com/pkg/discovery/tracing"
 )
 
-const serviceName = "metadata"
+const (
+	serviceName = "metadata"
+	devEnv      = "dev"
+	prodEnv     = "prod"
+)
 
 func main() {
-	// logger startup
-	var env string
-	flag.StringVar(&env, "env", "dev", "environment")
-	flag.Parse()
-	logger, _ := zap.NewProduction()
+	var logger *zap.Logger
+	configPathLocal := "./metadata/configs/base.yaml"
+	env := os.Getenv("ENV")
+	configpath := os.Getenv("CONFIG_PATH")
+	if env == "" {
+		env = devEnv
+	}
+	if configpath == "" {
+		configpath = configPathLocal
+	}
+	if env == devEnv {
+		logger, _ = zap.NewDevelopment()
+	} else {
+		logger, _ = zap.NewProduction()
+	}
+	viperConfig := viper.New()
+	logger.Info("env", zap.String("env", env))
+	logger.Info("configpath", zap.String("configpath", configpath))
+	viperConfig.SetConfigFile(configpath)
+	viperConfig.SetConfigType("yaml")
+	if err := viperConfig.ReadInConfig(); err != nil {
+		logger.Fatal("Failed to read configuration", zap.Error(err))
+	}
 
 	defer func() {
 		err := logger.Sync()
@@ -51,7 +73,7 @@ func main() {
 
 	{
 
-		f, err := os.Open("./metadata/configs/base.yaml")
+		f, err := os.Open(configpath)
 		if err != nil {
 			logger.Fatal("Failed to open configuration", zap.Error(err))
 		}
@@ -69,10 +91,49 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var tp *tracesdk.TracerProvider
+	{
+		var registry discovery.Registry
+		var err error
+		if env == devEnv {
+			registry = memoryDiscovery.NewRegistry()
+		} else {
+			registry, err = consul.NewRegistry("consul:8500")
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		instanceID := discovery.GenerateInstanceID(serviceName)
+
+		if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", port)); err != nil {
+			panic(err)
+		}
+
+		// reporting healthy state
+		if env != devEnv {
+			go func() {
+				for {
+					if err := registry.ReportHealthState(instanceID); err != nil {
+						logger.Error("Failed to report healthy state", zap.Error(err))
+					}
+
+					time.Sleep(1 * time.Second)
+				}
+			}()
+		}
+
+		defer func() {
+			err := registry.DeRegister(ctx, instanceID, serviceName)
+			if err != nil {
+				logger.Error("Failed to deregister service", zap.Error(err))
+			}
+		}()
+
+	}
+
+	var repo metadata.Repository
 
 	{
-		// Tracing setup
 		tp, err := tracing.SetUpTracing(ctx, serviceName)
 		if err != nil {
 			logger.Fatal("Failed to initialize tracing", zap.Error(err))
@@ -87,49 +148,9 @@ func main() {
 		otel.SetTracerProvider(tp)
 		otel.SetTextMapPropagator(propagation.TraceContext{})
 
-	}
-
-	{
-
-		consulRegistry, err := consul.NewRegistry("localhost:8500")
-		if err != nil {
-			panic(err)
-		}
-
-		instanceID := discovery.GenerateInstanceID(serviceName)
-
-		if err := consulRegistry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", port)); err != nil {
-			panic(err)
-		}
-
-		// reporting healthy state
-		go func() {
-			for {
-				if err := consulRegistry.ReportHealthState(instanceID); err != nil {
-					logger.Error("Failed to report healthy state", zap.Error(err))
-				}
-
-				time.Sleep(1 * time.Second)
-			}
-		}()
-
-		defer func() {
-			err := consulRegistry.DeRegister(ctx, instanceID, serviceName)
-			if err != nil {
-				logger.Error("Failed to deregister service", zap.Error(err))
-			}
-		}()
-
-	}
-
-	var repo metadata.Repository
-
-	{
-
 		// setting up repository Env
-		var err error
-		if env == "dev" {
-			repo = memory.New()
+		if env == devEnv {
+			repo = memoryRepo.New()
 		} else {
 			repo, err = mysql.New()
 			logger.Info("Connected to mysql")

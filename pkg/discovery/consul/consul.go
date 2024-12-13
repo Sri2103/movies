@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	consul "github.com/hashicorp/consul/api"
+	"movieexample.com/pkg/discovery"
 )
 
 // Registry is a Consul registry client that can be used to interact with a Consul
@@ -17,7 +18,7 @@ type Registry struct {
 
 // NewRegistry creates a new Consul registry client with the given address.
 // It returns the registry client and any error that occurred during creation.
-func NewRegistry(address string) (*Registry, error) {
+func NewRegistry(address string) (discovery.Registry, error) {
 	config := consul.DefaultConfig()
 	config.Address = address
 	client, err := consul.NewClient(config)

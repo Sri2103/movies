@@ -27,7 +27,7 @@ type Registry struct {
 
 // NewRegistry creates a new thread-safe in-memory registry for tracking service instances.
 // It initializes the serviceAddrs map to store service names mapped to instance IDs and service instance details.
-func NewRegistry() *Registry {
+func NewRegistry() discovery.Registry {
 	return &Registry{
 		serviceAddrs: make(map[string]map[string]*serviceInstance),
 	}

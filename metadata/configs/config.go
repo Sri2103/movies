@@ -4,10 +4,18 @@ type Config struct {
 	API        APIConfig        `yaml:"api"`
 	Jaeger     JaegerConfig     `yaml:"jaeger"`
 	Prometheus PrometheusConfig `yaml:"prometheus"`
+	Consul     ConsulConfig     `yaml:"consul"`
+	GRPC       GRPCConfig       `yaml:"grpc"`
 }
 
 type APIConfig struct {
-	Port int `yaml:"port"`
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
+}
+
+type GRPCConfig struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
 }
 
 type JaegerConfig struct {
@@ -16,4 +24,8 @@ type JaegerConfig struct {
 
 type PrometheusConfig struct {
 	MetricsPort int `yaml:"metricsPort"`
+}
+
+type ConsulConfig struct {
+	Address string `yaml:"address"`
 }
