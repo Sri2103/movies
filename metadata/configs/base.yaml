@@ -4,3 +4,6 @@ jaeger:
   url: "127.0.0.1:4317"
 prometheus:
   metricsPort: 8091
+sql:
+  userName: "root"
+  password: "password"
