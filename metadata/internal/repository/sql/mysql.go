@@ -6,6 +6,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver
 	dbGen "movieexample.com/gen/db"
+	"movieexample.com/metadata/internal/controller/metadata"
 	"movieexample.com/metadata/internal/repository"
 	"movieexample.com/metadata/pkg/model"
 )
@@ -18,7 +19,7 @@ type Repository struct {
 // New creates a new MySQL repository.
 // It opens a connection to the MySQL database using the provided connection string.
 // If the connection cannot be established, an error is returned.
-func New() (*Repository, error) {
+func New() (metadata.Repository, error) {
 	db, err := sql.Open("mysql", "root:password@/movieexample")
 	if err != nil {
 		return nil, err

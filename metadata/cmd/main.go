@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -45,113 +46,120 @@ func main() {
 	logger = logger.With(zap.String("service", serviceName))
 
 	// setting up metadata config rom yaml file
-
-	f, err := os.Open("./metadata/configs/base.yaml")
-	if err != nil {
-		logger.Fatal("Failed to open configuration", zap.Error(err))
-	}
-
 	var cfg *config.Config
+	var port int
 
-	if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
-		logger.Fatal("Failed to parse configuration:%w", zap.Error(err))
+	{
+
+		f, err := os.Open("./metadata/configs/base.yaml")
+		if err != nil {
+			logger.Fatal("Failed to open configuration", zap.Error(err))
+		}
+
+		if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
+			logger.Fatal("Failed to parse configuration:%w", zap.Error(err))
+		}
+
+		port = cfg.API.Port
+
+		logger.Info("Starting the metadata service", zap.Int("port", port))
+
 	}
-
-	port := cfg.API.Port
-
-	logger.Info("Starting the metadata service", zap.Int("port", port))
-
-	logger.Info("Configuration loaded", zap.Any("config", cfg))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// setting up metrics
-	// mp,err := metrics.SetUpMetrics(ctx, serviceName)
-	// if err != nil {
-	// 	logger.Fatal("Failed to initialize metrics", zap.Error(err))
-	// }
-	// defer mp.Shutdown(ctx)
+	var tp *tracesdk.TracerProvider
 
-	// setting consul registry
-
-	// setup copy tracing
-	tp, err := tracing.SetUpTracing(ctx, serviceName)
-	if err != nil {
-		logger.Fatal("Failed to initialize tracing", zap.Error(err))
-	}
-
-	defer func() {
-		if err := tp.Shutdown(ctx); err != nil {
-			logger.Error("Failed to shutdown tracer provider", zap.Error(err))
+	{
+		// Tracing setup
+		tp, err := tracing.SetUpTracing(ctx, serviceName)
+		if err != nil {
+			logger.Fatal("Failed to initialize tracing", zap.Error(err))
 		}
-	}()
 
-	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(propagation.TraceContext{})
-
-	consulRegistry, err := consul.NewRegistry("localhost:8500")
-	if err != nil {
-		panic(err)
-	}
-
-	instanceID := discovery.GenerateInstanceID(serviceName)
-
-	if err := consulRegistry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", port)); err != nil {
-		panic(err)
-	}
-
-	// reporting healthy state
-	go func() {
-		for {
-			if err := consulRegistry.ReportHealthState(instanceID); err != nil {
-				logger.Error("Failed to report healthy state", zap.Error(err))
+		defer func() {
+			if err := tp.Shutdown(ctx); err != nil {
+				logger.Error("Failed to shutdown tracer provider", zap.Error(err))
 			}
+		}()
 
-			time.Sleep(1 * time.Second)
-		}
-	}()
+		otel.SetTracerProvider(tp)
+		otel.SetTextMapPropagator(propagation.TraceContext{})
 
-	defer func() {
-		err := consulRegistry.DeRegister(ctx, instanceID, serviceName)
+	}
+
+	{
+
+		consulRegistry, err := consul.NewRegistry("localhost:8500")
 		if err != nil {
-			logger.Error("Failed to deregister service", zap.Error(err))
+			panic(err)
 		}
-	}()
 
-	// setting up repository Env
+		instanceID := discovery.GenerateInstanceID(serviceName)
+
+		if err := consulRegistry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", port)); err != nil {
+			panic(err)
+		}
+
+		// reporting healthy state
+		go func() {
+			for {
+				if err := consulRegistry.ReportHealthState(instanceID); err != nil {
+					logger.Error("Failed to report healthy state", zap.Error(err))
+				}
+
+				time.Sleep(1 * time.Second)
+			}
+		}()
+
+		defer func() {
+			err := consulRegistry.DeRegister(ctx, instanceID, serviceName)
+			if err != nil {
+				logger.Error("Failed to deregister service", zap.Error(err))
+			}
+		}()
+
+	}
+
 	var repo metadata.Repository
-	if env == "dev" {
-		repo = memory.New()
-	} else {
-		repo, err = mysql.New()
-		logger.Info("Connected to mysql")
-		if err != nil {
-			logger.Fatal("Failed to initialize mysql", zap.Error(err))
+
+	{
+
+		// setting up repository Env
+		var err error
+		if env == "dev" {
+			repo = memory.New()
+		} else {
+			repo, err = mysql.New()
+			logger.Info("Connected to mysql")
+			if err != nil {
+				logger.Fatal("Failed to initialize mysql", zap.Error(err))
+			}
 		}
-	}
 
-	// setting up repository
-	ctrl := metadata.New(repo)
-	h := grpchandler.New(ctrl)
+		// setting up repository
+		ctrl := metadata.New(repo)
+		h := grpchandler.New(ctrl)
 
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
-	if err != nil {
-		logger.Fatal("Failed to listen", zap.Error(err))
-	}
+		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
+		if err != nil {
+			logger.Fatal("Failed to listen", zap.Error(err))
+		}
 
-	// setting up grpc server
-	srv := grpc.NewServer(
-		grpc.StatsHandler(otelgrpc.NewServerHandler(
-			otelgrpc.WithPropagators(propagation.TraceContext{}),
-			otelgrpc.WithTracerProvider(tp),
-		)),
-	)
-	// grpc.NewServer(grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()))
-	reflection.Register(srv)
-	gen.RegisterMetadataServiceServer(srv, h)
+		// setting up grpc server
+		srv := grpc.NewServer(
+			grpc.StatsHandler(otelgrpc.NewServerHandler(
+				otelgrpc.WithPropagators(propagation.TraceContext{}),
+				otelgrpc.WithTracerProvider(tp),
+			)),
+		)
+		// grpc.NewServer(grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()))
+		reflection.Register(srv)
+		gen.RegisterMetadataServiceServer(srv, h)
 
-	if err := srv.Serve(lis); err != nil {
-		panic(err)
+		if err := srv.Serve(lis); err != nil {
+			logger.Fatal("Failed to serve", zap.Error(err))
+		}
 	}
 }
