@@ -24,7 +24,7 @@ import (
 	"movieexample.com/pkg/discovery/consul"
 	memoryDiscovery "movieexample.com/pkg/discovery/memory"
 	"movieexample.com/pkg/discovery/tracing"
-	config "movieexample.com/rating/internal/configs"
+	config "movieexample.com/rating/configs"
 	"movieexample.com/rating/internal/controller/rating"
 	grpcHandler "movieexample.com/rating/internal/handler/grpc"
 	"movieexample.com/rating/internal/repository/memory"
