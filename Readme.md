@@ -40,17 +40,6 @@ A robust, distributed movie platform built with a microservices architecture, im
 
 ---
 
-mermaid
-graph LR
-    A[Movie Service] -->|gRPC| B[Rating Service]
-    A -->|gRPC| C[Movie Metadata Service]
-    D[Consul] -->|Service Discovery| A
-    D -->|Service Discovery| B
-    D -->|Service Discovery| C
-    E[Jaeger] -->|Tracing| A
-    E -->|Tracing| B
-    E -->|Tracing| C
-
 ## Service Communication Flow
 
 The communication between services follows a structured flow, ensuring robust integration and observability:
@@ -94,7 +83,10 @@ The communication between services follows a structured flow, ensuring robust in
 1. Clone the repository:
 
    git clone <https://github.com/Sri2103/movies.git>
-   cd movie-platform-microservices
+
+   ``` bash
+   cd movies
+   ```
 
 2. Start the services using Docker Compose:
 
@@ -268,7 +260,3 @@ Provides supplementary information about movies, such as genres, cast, and runti
 4. Submit a pull request for review.
 
 ---
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for details.

@@ -1,5 +1,10 @@
-api:
-  port: 8082
+http:
+  port: 9092
+  host: "127.0.0.1"
+grpc:
+  port: 8083
+  host: "127.0.0.1"
+
 jaeger:
   url: "127.0.0.1:4317"
 prometheus:

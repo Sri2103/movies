@@ -1,0 +1,16 @@
+http:
+  host: "127.0.0.1"
+  port: 9092
+jaeger:
+  url: "127.0.0.1:4317"
+prometheus:
+  metricsPort: 8091
+sql:
+  userName: "root"
+  password: "password"
+
+consul:
+  address: "127.0.0.1:8500"
+grpc:
+  host: "127.0.0.1"
+  port: 8081
