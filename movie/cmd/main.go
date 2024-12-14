@@ -193,6 +193,3 @@ func main() {
 	logger.Warn("All servers cleared")
 	os.Exit(0)
 }
-
-func startGrpcServer(port int, controller *movie.Controller) {
-}

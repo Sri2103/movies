@@ -3,7 +3,7 @@ package config
 type Config struct {
 	Consul Consul `yaml:"consul"`
 	Grpc   Grpc   `yaml:"grpc"`
-	API    Api    `yaml:"http"`
+	API    API    `yaml:"http"`
 }
 
 type Consul struct {
@@ -20,6 +20,6 @@ type Jaeger struct {
 	Port int    `yaml:"port"`
 }
 
-type Api struct {
+type API struct {
 	Port int `yaml:"port"`
 }

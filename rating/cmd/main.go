@@ -127,7 +127,6 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 

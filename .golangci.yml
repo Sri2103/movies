@@ -15,7 +15,9 @@ linters:
     - tagalign
     - sqlclosecheck
     - revive
-    - nilaway 
+    - nilerr
+    - nilnil
+    - nestif
 
     # - cyclop
 
