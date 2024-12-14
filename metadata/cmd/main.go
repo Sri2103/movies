@@ -3,8 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
+	"net/http"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/spf13/viper"
@@ -61,7 +66,7 @@ func main() {
 	defer func() {
 		err := logger.Sync()
 		if err != nil {
-			logger.Fatal(err.Error())
+			return
 		}
 	}()
 
@@ -105,7 +110,7 @@ func main() {
 
 		instanceID := discovery.GenerateInstanceID(serviceName)
 
-		if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", port)); err != nil {
+		if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", cfg.GRPC.Port)); err != nil {
 			panic(err)
 		}
 
@@ -132,6 +137,11 @@ func main() {
 	}
 
 	var repo metadata.Repository
+
+	var wg sync.WaitGroup
+	var srv *grpc.Server
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	{
 		tp, err := tracing.SetUpTracing(ctx, serviceName)
@@ -163,13 +173,12 @@ func main() {
 		ctrl := metadata.New(repo)
 		h := grpchandler.New(ctrl)
 
-		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", port))
+		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", cfg.GRPC.Port))
 		if err != nil {
 			logger.Fatal("Failed to listen", zap.Error(err))
 		}
 
-		// setting up grpc server
-		srv := grpc.NewServer(
+		srv = grpc.NewServer(
 			grpc.StatsHandler(otelgrpc.NewServerHandler(
 				otelgrpc.WithPropagators(propagation.TraceContext{}),
 				otelgrpc.WithTracerProvider(tp),
@@ -179,8 +188,58 @@ func main() {
 		reflection.Register(srv)
 		gen.RegisterMetadataServiceServer(srv, h)
 
-		if err := srv.Serve(lis); err != nil {
-			logger.Fatal("Failed to serve", zap.Error(err))
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			if err := srv.Serve(lis); err != nil {
+				logger.Fatal("Failed to serve", zap.Error(err))
+				return
+			}
+		}()
+
 	}
+
+	httpServ := http.NewServeMux()
+	httpServ.HandleFunc("/ready", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	httpServ.HandleFunc("/live", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%d", cfg.API.Port),
+		Handler: httpServ,
+	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		logger.Info("Starting health check server", zap.Int("port", cfg.API.Port))
+		log.Println("HTTP port binding here:", cfg.API.Port)
+
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Info("HTTP server failed: ", zap.Error(err))
+			return
+		}
+	}()
+
+	<-stop
+	logger.Info("Shutting down servers...")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 5*time.Second)
+	defer shutdownCancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		logger.Error("Failed to shutdown HTTP server", zap.Error(err))
+	} else {
+		logger.Info("HTTP server stopped")
+	}
+
+	// graceful shutdown of gRPC server
+	srv.GracefulStop()
+	logger.Info("Grpc Server stopped")
+	wg.Wait()
+	logger.Info("All servers stopped")
 }

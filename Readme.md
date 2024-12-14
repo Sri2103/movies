@@ -147,7 +147,9 @@ The communication between services follows a structured flow, ensuring robust in
 
 4. Run tests:
 
-   npm test
+   ``` bash
+   go test -v ./...
+   ```
 
 ---
 
@@ -200,6 +202,57 @@ Provides supplementary information about movies, such as genres, cast, and runti
 - Focus on core business logic and domain-specific requirements.
 
 ---
+
+## Deployment
+
+### Docker Deployment
+
+1. Build Docker images:
+   docker build -t movie-service .
+   docker build -t rating-service .
+   docker build -t metadata-service .
+2. Deploy services using Docker Compose:
+   docker-compose up -d
+3. Access the system:
+   - Consul UI: <http://localhost:8500>
+   - Jaeger UI: <http://localhost:16686>
+
+### Kubernetes Deployment
+
+1. Configure Kubernetes cluster and apply the deployment files.
+  Use Helm to manage Kubernetes deployments.
+  Repo: <https://github.com/Sri2103/moviesDeployment>
+  ToStart:
+  
+   movie:
+
+   ```bash
+      helm install movie movie/
+   ```
+
+   Tracing:
+
+   ```bash
+      helm install bitnami/jaeger
+      ```
+
+   Consul:
+
+   ```bash
+      helm install consul hashicorp/consul
+   ```
+
+      rating:
+
+   ```bash
+      helm install rating rating/
+    ```
+
+   metatadata:
+
+   ```bash
+       helm install metatadata metatadata/ 
+   ```
 
 ## Contributing
 

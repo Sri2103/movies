@@ -1,5 +1,6 @@
-api:
-  port: 8081
+http:
+  host: "127.0.0.1"
+  port: 9092
 jaeger:
   url: "127.0.0.1:4317"
 prometheus:

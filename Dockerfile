@@ -1,8 +1,10 @@
-# go docker file with env varaibles to specify the image name and tag and path to main.go
-# docker build -t metadata:<tag> --build-arg service=<servicename> .
+
 ARG service
 
+
 FROM golang:1.23.4-alpine
+ENV HTTP_PORT=9092
+ENV GRPC_PORT=8081
 ARG service
 WORKDIR /app
 COPY . .
@@ -14,4 +16,11 @@ ARG service
 WORKDIR /app
 COPY --from=0 /app/main .
 COPY --from=0 /app/$service/configs/base.yaml  ./${service}/configs/base.yaml
+EXPOSE $HTTP_PORT
+EXPOSE $GRPC_PORT
 CMD ["./main"]
+
+
+
+# go docker file with env varaibles to specify the image name and tag and path to main.go
+# docker build -t metadata:<tag> --build-arg service=<servicename> .

@@ -1,7 +1,7 @@
 package config
 
 type Config struct {
-	API        APIConfig        `yaml:"api"`
+	API        APIConfig        `yaml:"http"`
 	Jaeger     JaegerConfig     `yaml:"jaeger"`
 	Prometheus PrometheusConfig `yaml:"prometheus"`
 	Consul     ConsulConfig     `yaml:"consul"`
