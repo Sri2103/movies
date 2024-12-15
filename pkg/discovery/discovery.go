@@ -36,7 +36,7 @@ type Registry interface {
 	// The instanceID parameter uniquely identifies the service instance.
 	// The serviceName parameter specifies the name of the service.
 	// The function returns an error if the health state reporting fails.
-	ReportHealthState(instanceID string) error
+	ReportHealthState(instanceID string, serviceName string) error
 }
 
 // ErrNotFound is returned when no service addresses are found.

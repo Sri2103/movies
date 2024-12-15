@@ -90,7 +90,7 @@ func main() {
 		if env != devEnv {
 			go func() {
 				for {
-					if err := registry.ReportHealthState(instanceID); err != nil {
+					if err := registry.ReportHealthState(instanceID,serviceName); err != nil {
 						logger.Error("Failed to report healthy state", zap.Error(err))
 					}
 
@@ -116,7 +116,7 @@ func main() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	{
-		tp, err := tracing.SetUpTracing(ctx, serviceName)
+		tp, err := tracing.SetUpTracing(ctx, serviceName, cfg.Jaeger.URL)
 		if err != nil {
 			logger.Fatal("Failed to initialize tracing", zap.Error(err))
 		}
@@ -136,11 +136,12 @@ func main() {
 			logger.Info("Connected to memory")
 			logger.Info("Memory repo connected at env: ", zap.String("env", env))
 		} else {
-			repo, err = postgres.ConnectSQL(cfg)
+			repo, err = postgres.ConnectSQL(ctx, cfg)
 			if err != nil {
 				logger.Fatal("Failed to initialize mysql", zap.Error(err))
 			}
-			logger.Info("Connected to mysql")
+			logger.Info("Connected to DB")
+			defer postgres.CloseDB(repo)
 		}
 
 		// setting up repository

@@ -72,7 +72,7 @@ func main() {
 	var tp *tracesdk.TracerProvider
 	{
 		var err error
-		tp, err = tracing.SetUpTracing(ctx, ServiceName)
+		tp, err = tracing.SetUpTracing(ctx, ServiceName, cfg.Jaeger.URL)
 		if err != nil {
 			logger.Fatal("Failed to create tracer provider", zap.Error(err))
 		}
@@ -102,24 +102,28 @@ func main() {
 		}
 
 		instanceID := discovery.GenerateInstanceID(ServiceName)
-		if err := registry.Register(ctx, instanceID, ServiceName, fmt.Sprintf("%s:%d", cfg.GRPC.Host, cfg.GRPC.Port)); err != nil {
+		if err := registry.Register(ctx, instanceID, ServiceName, fmt.Sprintf("%s:%d", cfg.Host, cfg.GRPC.Port)); err != nil {
 			logger.Fatal("Failed to register service", zap.Error(err))
 		}
 
-		go func() {
-			for {
-				if err := registry.ReportHealthState(instanceID); err != nil {
-					log.Printf("Failed to report healthy state: %s", err)
+		if env != devEnv {
+			go func() {
+				for {
+					if err := registry.ReportHealthState(instanceID, ServiceName); err != nil {
+						logger.Error("Failed to report healthy state", zap.Error(err))
+					}
+
+					time.Sleep(1 * time.Second)
 				}
-				time.Sleep(1 * time.Second)
+			}()
+		}
+		defer func() {
+			err := registry.DeRegister(ctx, instanceID, ServiceName)
+			if err != nil {
+				logger.Error("Failed to deregister service", zap.Error(err))
 			}
 		}()
 
-		defer func() {
-			if err := registry.ReportHealthState(instanceID); err != nil {
-				log.Printf("Failed to report unhealthy state: %s", err)
-			}
-		}()
 	}
 
 	metadataGateway := metadatagateway.New(registry)
@@ -162,6 +166,7 @@ func main() {
 		}
 		wg.Add(1)
 		go func() {
+			wg.Done()
 			err := httpServer.ListenAndServe()
 			if err != nil && err != http.ErrServerClosed {
 				logger.Sugar().Fatalf("Server stopped unfortunately", zap.Error(err))

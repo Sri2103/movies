@@ -78,6 +78,6 @@ func (r *Registry) ServiceAddresses(_ context.Context, serviceID string) ([]stri
 // ReportHealthyState reports the healthy state of a service instance to the Consul agent.
 // It takes the instance ID and service name, and passes the TTL for the service's health check.
 // This allows the Consul agent to mark the service instance as healthy.
-func (r *Registry) ReportHealthState(instanceID string) error {
+func (r *Registry) ReportHealthState(instanceID string, _ string) error {
 	return r.client.Agent().PassTTL(instanceID, "")
 }

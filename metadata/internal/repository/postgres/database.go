@@ -2,36 +2,36 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib" // Import the PostgreSQL driver
 	dbGen "movieexample.com/gen/db"
 	config "movieexample.com/metadata/configs"
 	"movieexample.com/metadata/internal/controller/metadata"
-	"movieexample.com/metadata/internal/repository"
 	"movieexample.com/metadata/pkg/model"
 )
 
 type repo struct {
-	db *sql.DB
+	db *pgxpool.Pool
 	q  dbGen.Queries
 }
 
-func NewDatabase(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("pgx", dsn)
+func NewDatabase(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
+	conn, err := pgxpool.New(ctx, dsn)
+	// db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, err
 	}
-	if err = db.Ping(); err != nil {
+	if err = conn.Ping(ctx); err != nil {
 		return nil, err
 	}
 
-	return db, nil
+	return conn, nil
 }
 
-func ConnectSQL(config *config.Config) (metadata.Repository, error) {
+func ConnectSQL(ctx context.Context, config *config.Config) (metadata.Repository, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
 		config.Postgres.Host,
@@ -41,44 +41,44 @@ func ConnectSQL(config *config.Config) (metadata.Repository, error) {
 		config.Postgres.Password,
 		config.Postgres.SslMode,
 	)
-	db, err := NewDatabase(dsn)
+
+	db, err := NewDatabase(ctx, dsn)
 	if err != nil {
 		fmt.Println(err.Error(), "Error for creating database")
 		panic(err)
 	}
-	db.SetMaxOpenConns(10)
-	db.SetConnMaxIdleTime(5)
-	db.SetConnMaxLifetime(5 * time.Minute)
 	return &repo{db: db, q: *dbGen.New(db)}, nil
+}
+
+func CloseDB(r metadata.Repository) {
+	rp := r.(*repo)
+	rp.db.Close()
 }
 
 // Get retrieves the metadata for the movie with the given ID from the database.
 // If the movie is not found, it returns repository.ErrNotFound.
 // If there is an error retrieving the metadata, it returns the error.
 func (r *repo) Get(ctx context.Context, id string) (*model.Metadata, error) {
-	var title, description, director string
-	err := r.db.QueryRowContext(ctx, "SELECT title, description, director FROM movie WHERE id = ?", id).Scan(&title, &description, &director)
+	mv, err := r.q.GetMovie(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, repository.ErrNotFound
-		}
 		return nil, err
 	}
+
 	return &model.Metadata{
 		ID:          id,
-		Title:       title,
-		Description: description,
-		Director:    director,
+		Title:       mv.Title.String,
+		Description: mv.Description.String,
+		Director:    mv.Director.String,
 	}, nil
 }
 
 // Put adds movie metadata for a given movie id.
 func (r *repo) Put(ctx context.Context, id string, metadata *model.Metadata) error {
-	_, err := r.q.InsertMovie(ctx, dbGen.InsertMovieParams{
+	err := r.q.InsertMovie(ctx, dbGen.InsertMovieParams{
 		ID:          id,
-		Title:       sql.NullString{String: metadata.Title, Valid: metadata.Title != ""},
-		Description: sql.NullString{String: metadata.Description, Valid: metadata.Description != ""},
-		Director:    sql.NullString{String: metadata.Director, Valid: metadata.Director != ""},
+		Title:       pgtype.Text{String: metadata.Title, Valid: metadata.Title != ""},
+		Description: pgtype.Text{String: metadata.Description, Valid: metadata.Description != ""},
+		Director:    pgtype.Text{String: metadata.Director, Valid: metadata.Director != ""},
 	})
 	return err
 }

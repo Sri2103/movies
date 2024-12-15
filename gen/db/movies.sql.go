@@ -7,49 +7,47 @@ package dbGen
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getMovie = `-- name: GetMovie :one
-SELECT
-    id, title, description, director
-FROM
-    Movie
-WHERE
-    "id" = ?
+SELECT title, description, director 
+FROM movie 
+WHERE id = $1
 `
 
-func (q *Queries) GetMovie(ctx context.Context, dollar_1 interface{}) (Movie, error) {
-	row := q.db.QueryRowContext(ctx, getMovie, dollar_1)
-	var i Movie
-	err := row.Scan(
-		&i.ID,
-		&i.Title,
-		&i.Description,
-		&i.Director,
-	)
+type GetMovieRow struct {
+	Title       pgtype.Text
+	Description pgtype.Text
+	Director    pgtype.Text
+}
+
+func (q *Queries) GetMovie(ctx context.Context, id string) (GetMovieRow, error) {
+	row := q.db.QueryRow(ctx, getMovie, id)
+	var i GetMovieRow
+	err := row.Scan(&i.Title, &i.Description, &i.Director)
 	return i, err
 }
 
-const insertMovie = `-- name: InsertMovie :execresult
-insert into
-    Movie (id, title, description, director)
-values
-    (?, ?, ?, ?)
+const insertMovie = `-- name: InsertMovie :exec
+INSERT INTO movie (id, title, description, director) 
+VALUES ($1, $2, $3, $4)
 `
 
 type InsertMovieParams struct {
 	ID          string
-	Title       sql.NullString
-	Description sql.NullString
-	Director    sql.NullString
+	Title       pgtype.Text
+	Description pgtype.Text
+	Director    pgtype.Text
 }
 
-func (q *Queries) InsertMovie(ctx context.Context, arg InsertMovieParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, insertMovie,
+func (q *Queries) InsertMovie(ctx context.Context, arg InsertMovieParams) error {
+	_, err := q.db.Exec(ctx, insertMovie,
 		arg.ID,
 		arg.Title,
 		arg.Description,
 		arg.Director,
 	)
+	return err
 }

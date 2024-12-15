@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"movieexample.com/gen"
 	config "movieexample.com/metadata/configs"
-	mysql "movieexample.com/metadata/internal/repository/sql"
+	postgres "movieexample.com/metadata/internal/repository/postgres"
 	"movieexample.com/metadata/pkg/testutil"
 	"movieexample.com/pkg/discovery"
 	"movieexample.com/pkg/discovery/memory"
@@ -53,7 +53,7 @@ func TestPutData(t *testing.T) {
 
 func StartMetadataService(ctx context.Context, registry discovery.Registry) (*grpc.Server, error) {
 	log.Println("Starting metadata service on :", metadataServiceAddr)
-	r, err := mysql.New(&config.Config{})
+	r, err := postgres.ConnectSQL(ctx, &config.Config{})
 	if err != nil {
 		return nil, err
 	}

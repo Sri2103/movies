@@ -7,32 +7,30 @@ package dbGen
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getRatings = `-- name: GetRatings :many
-SELECT
-    user_id,
-    value
-FROM
-    ratings
-WHERE
-    record_id = ?
-    AND record_type = ?
+SELECT user_id, value
+FROM ratings
+WHERE record_id = $1
+  AND record_type = $2
 `
 
 type GetRatingsParams struct {
-	RecordID   sql.NullString
-	RecordType sql.NullString
+	RecordID   pgtype.Text
+	RecordType pgtype.Text
 }
 
 type GetRatingsRow struct {
-	UserID sql.NullString
-	Value  sql.NullInt32
+	UserID pgtype.Text
+	Value  pgtype.Int4
 }
 
 func (q *Queries) GetRatings(ctx context.Context, arg GetRatingsParams) ([]GetRatingsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getRatings, arg.RecordID, arg.RecordType)
+	rows, err := q.db.Query(ctx, getRatings, arg.RecordID, arg.RecordType)
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +43,6 @@ func (q *Queries) GetRatings(ctx context.Context, arg GetRatingsParams) ([]GetRa
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -55,21 +50,19 @@ func (q *Queries) GetRatings(ctx context.Context, arg GetRatingsParams) ([]GetRa
 }
 
 const insertRating = `-- name: InsertRating :execresult
-INSERT INTO
-    ratings (record_id, record_type, user_id, value)
-VALUES
-    (?, ?, ?, ?)
+INSERT INTO ratings (record_id, record_type, user_id, value)
+VALUES ($1, $2, $3, $4)
 `
 
 type InsertRatingParams struct {
-	RecordID   sql.NullString
-	RecordType sql.NullString
-	UserID     sql.NullString
-	Value      sql.NullInt32
+	RecordID   pgtype.Text
+	RecordType pgtype.Text
+	UserID     pgtype.Text
+	Value      pgtype.Int4
 }
 
-func (q *Queries) InsertRating(ctx context.Context, arg InsertRatingParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, insertRating,
+func (q *Queries) InsertRating(ctx context.Context, arg InsertRatingParams) (pgconn.CommandTag, error) {
+	return q.db.Exec(ctx, insertRating,
 		arg.RecordID,
 		arg.RecordType,
 		arg.UserID,

@@ -27,6 +27,7 @@ import (
 	"movieexample.com/rating/internal/controller/rating"
 	grpcHandler "movieexample.com/rating/internal/handler/grpc"
 	"movieexample.com/rating/internal/repository/memory"
+	"movieexample.com/rating/internal/repository/postgres"
 )
 
 const serviceName = "rating"
@@ -80,7 +81,7 @@ func main() {
 
 		instanceID := discovery.GenerateInstanceID(serviceName)
 
-		if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", cfg.GRPC.Port)); err != nil {
+		if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("%s:%d", cfg.Host, cfg.GRPC.Port)); err != nil {
 			panic(err)
 		}
 
@@ -88,7 +89,7 @@ func main() {
 		if env != devEnv {
 			go func() {
 				for {
-					if err := registry.ReportHealthState(instanceID); err != nil {
+					if err := registry.ReportHealthState(instanceID, serviceName); err != nil {
 						logger.Error("Failed to report healthy state", zap.Error(err))
 					}
 
@@ -116,7 +117,7 @@ func main() {
 	{
 		var err error
 
-		tp, err = tracing.SetUpTracing(ctx, serviceName)
+		tp, err = tracing.SetUpTracing(ctx, serviceName, cfg.Jaeger.URL)
 		if err != nil {
 			logger.Fatal("Failed to create tracer", zap.Error(err))
 		}
@@ -132,9 +133,21 @@ func main() {
 
 	// grpc server
 	var grpcServer *grpc.Server
+	var repo rating.Repository
 
 	{
-		repo := memory.New()
+		if env == string(devEnv) {
+			repo = memory.New()
+			logger.Info("Connected to memory")
+			logger.Info("Memory repo connected at env: ", zap.String("env", env))
+		} else {
+			repo, err = postgres.ConnectSQL(ctx, cfg)
+			if err != nil {
+				logger.Fatal("Failed to initialize mysql", zap.Error(err))
+			}
+			logger.Info("Connected to DB")
+			defer postgres.CloseDB(repo)
+		}
 
 		controller := rating.NewController(repo, nil)
 		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GRPC.Port))

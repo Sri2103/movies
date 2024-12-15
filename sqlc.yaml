@@ -1,9 +1,10 @@
 version: "2"
 sql:
-  - engine: "mysql"
+  - engine: "postgresql"
     queries: "query/"
     schema: "schema/"
     gen:
       go:
         package: "dbGen"
         out: "gen/db"
+        sql_package: "pgx/v5"

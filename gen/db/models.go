@@ -5,19 +5,19 @@
 package dbGen
 
 import (
-	"database/sql"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Movie struct {
 	ID          string
-	Title       sql.NullString
-	Description sql.NullString
-	Director    sql.NullString
+	Title       pgtype.Text
+	Description pgtype.Text
+	Director    pgtype.Text
 }
 
 type Rating struct {
-	RecordID   sql.NullString
-	RecordType sql.NullString
-	UserID     sql.NullString
-	Value      sql.NullInt32
+	RecordID   pgtype.Text
+	RecordType pgtype.Text
+	UserID     pgtype.Text
+	Value      pgtype.Int4
 }

@@ -1,13 +1,9 @@
 -- name: GetMovie :one
-SELECT
-    *
-FROM
-    Movie
-WHERE
-    "id" = ?;
+SELECT title, description, director 
+FROM movie 
+WHERE id = $1;
 
--- name: InsertMovie :execresult
-insert into
-    Movie (id, title, description, director)
-values
-    (?, ?, ?, ?);
+
+-- name: InsertMovie :exec
+INSERT INTO movie (id, title, description, director) 
+VALUES ($1, $2, $3, $4);

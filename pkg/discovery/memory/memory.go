@@ -86,7 +86,7 @@ func (r *Registry) ServiceAddresses(_ context.Context, serviceName string) ([]st
 	return addresses, nil
 }
 
-func (r *Registry) ReportHealthState(serviceName string) error {
+func (r *Registry) ReportHealthState(instanceID string, serviceName string) error {
 	r.Lock()
 	defer r.Unlock()
 	if _, ok := r.serviceAddrs[serviceName]; !ok {
@@ -96,5 +96,6 @@ func (r *Registry) ReportHealthState(serviceName string) error {
 	if _, ok := r.serviceAddrs[serviceName]; ok {
 		return errors.New("service not registered yet")
 	}
+	r.serviceAddrs[serviceName][instanceID].lastActive = time.Now()
 	return nil
 }

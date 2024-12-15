@@ -11,7 +11,7 @@ import (
 
 func SetUpConfig() (*Config, error) {
 	viperConfig := viper.New()
-	err := godotenv.Load(".env.rating")
+	err := godotenv.Load(".env.movies")
 	if err != nil {
 		log.Println("Error loading .env file")
 	}

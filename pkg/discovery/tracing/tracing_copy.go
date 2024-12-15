@@ -9,8 +9,8 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
 )
 
-func SetUpTracing(ctx context.Context, serviceName string) (*tracesdk.TracerProvider, error) {
-	exp, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint("127.0.0.1:4317"))
+func SetUpTracing(ctx context.Context, serviceName string, tracerURL string) (*tracesdk.TracerProvider, error) {
+	exp, err := otlptracegrpc.New(ctx, otlptracegrpc.WithInsecure(), otlptracegrpc.WithEndpoint(tracerURL))
 	if err != nil {
 		return nil, err
 	}
