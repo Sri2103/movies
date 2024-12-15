@@ -16,7 +16,7 @@ var (
 // ratingRepository is an interface that defines the methods for interacting with a rating storage system.
 // The Get method retrieves a list of ratings for the given record ID and record type.
 // The Put method stores a new rating for the given record ID and record type.
-type RatingRepository interface {
+type Repository interface {
 	Get(ctx context.Context, recordID model.RecordID, recordType model.RecordType) ([]model.Rating, error)
 	Put(ctx context.Context, recordID model.RecordID, recordType model.RecordType, rating *model.Rating) error
 }
@@ -27,12 +27,12 @@ type rateIngester interface {
 
 // Controller is a struct that holds a ratingRepository, which is used to interact with a rating storage system.
 type Controller struct {
-	repo     RatingRepository
+	repo     Repository
 	ingester rateIngester
 }
 
 // NewController creates a new instance of the Controller struct with the provided ratingRepository.
-func NewController(repo RatingRepository, ingester rateIngester) *Controller {
+func NewController(repo Repository, ingester rateIngester) *Controller {
 	return &Controller{
 		repo:     repo,
 		ingester: ingester,

@@ -32,7 +32,7 @@ func NewDatabase(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
-func ConnectSQL(config *config.Config) (rating.RatingRepository, error) {
+func ConnectSQL(config *config.Config) (rating.Repository, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
 		config.Postgres.Host,

@@ -18,6 +18,7 @@ linters:
     - nilerr
     - nilnil
     - nestif
+    - revive
 
     # - cyclop
 
