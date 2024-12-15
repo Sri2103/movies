@@ -16,8 +16,8 @@ type Movie struct {
 }
 
 type Rating struct {
-	ID      string
-	Userid  sql.NullString
-	Movieid sql.NullString
-	Value   sql.NullInt32
+	RecordID   sql.NullString
+	RecordType sql.NullString
+	UserID     sql.NullString
+	Value      sql.NullInt32
 }

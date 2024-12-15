@@ -71,10 +71,42 @@ services:
       POSTGRES_PASSWORD: harsha
       POSTGRES_DATABASE: movies
       POSTGRES_SSL_MODE: disable
-
     ports:
       - "8081:8081"
       - "9092:9092"
+    depends_on:
+      consul-server:
+        condition: service_started
+      consul-client:
+        condition: service_started
+      jaeger:
+        condition: service_started
+
+  rating:
+    container_name: rating
+    build:
+      context: .
+      args:
+        - service=rating
+    environment:
+      HOST: rating
+      JAEGER_AGENT_HOST: jaeger
+      JAEGER_AGENT_PORT: 4317
+      CONSUL_HOST: consul-server
+      CONSUL_PORT: 8500
+      CONSUL_SCHEME: http
+      HTTP_PORT: 9093
+      GRPC_PORT: 8082
+      ENV: docker
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: harsha
+      POSTGRES_DATABASE: movies
+      POSTGRES_SSL_MODE: disable
+    ports:
+      - "8082:8082"
+      - "9093:9093"
     depends_on:
       consul-server:
         condition: service_started

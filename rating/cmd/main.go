@@ -18,7 +18,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"gopkg.in/yaml.v3"
 	"movieexample.com/gen"
 	"movieexample.com/pkg/discovery"
 	"movieexample.com/pkg/discovery/consul"
@@ -38,10 +37,11 @@ const (
 func main() {
 	var logger *zap.Logger
 	// get env from env
-
-	configPathLocal := "./rating/configs/base.yaml"
+	cfg, err := config.SetUpConfig()
+	if err != nil {
+		panic(err)
+	}
 	env := os.Getenv("ENV")
-	configpath := os.Getenv("CONFIG_PATH")
 
 	if env == "" {
 		env = devEnv
@@ -60,26 +60,7 @@ func main() {
 		}
 	}()
 
-	var cfg *config.Config
-	var httpPort int
-	var grpcPort int
-
-	{
-		if configpath == "" {
-			configpath = configPathLocal
-		}
-
-		f, err := os.Open(configpath)
-		if err != nil {
-			logger.Fatal("Failed to open config file", zap.Error(err))
-		}
-		if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
-			logger.Fatal("Failed to decode config file", zap.Error(err))
-		}
-		httpPort = cfg.API.Port
-		grpcPort = cfg.GRPC.Port
-
-	}
+	logger = logger.With(zap.String("service", serviceName))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -91,7 +72,7 @@ func main() {
 		if env == devEnv {
 			registry = memoryDiscovery.NewRegistry()
 		} else {
-			registry, err = consul.NewRegistry("consul:8500")
+			registry, err = consul.NewRegistry(cfg.Consul.Address)
 			if err != nil {
 				panic(err)
 			}
@@ -156,7 +137,7 @@ func main() {
 		repo := memory.New()
 
 		controller := rating.NewController(repo, nil)
-		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", grpcPort))
+		lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GRPC.Port))
 		if err != nil {
 			logger.Fatal("Failed to listen", zap.Error(err))
 		}
@@ -169,7 +150,7 @@ func main() {
 
 		reflection.Register(grpcServer)
 		gen.RegisterRatingServiceServer(grpcServer, grpcHandler.New(controller))
-		logger.Info("Starting  grpc rating service on port", zap.Int("port", grpcPort))
+		logger.Info("Starting  grpc rating service on port", zap.Int("port", cfg.GRPC.Port))
 
 		wg.Add(1)
 		go func() {
@@ -187,20 +168,20 @@ func main() {
 		// var err error
 
 		mux := http.NewServeMux()
-		mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		})
-		mux.HandleFunc("/readyz", func(w http.ResponseWriter, _ *http.Request) {
+		mux.HandleFunc("/ready", func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		})
 		serverHTTP = &http.Server{
-			Addr:    fmt.Sprintf(":%d", httpPort),
+			Addr:    fmt.Sprintf(":%d", cfg.API.Port),
 			Handler: mux,
 		}
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			logger.Info("Starting http live and ready server", zap.Int("port", httpPort))
+			logger.Info("Starting http live and ready server", zap.Int("port", cfg.API.Port))
 			if err := serverHTTP.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				logger.Fatal("Failed to start http server", zap.Error(err))
 			}
