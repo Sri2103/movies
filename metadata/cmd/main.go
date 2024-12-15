@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -12,20 +11,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/spf13/viper"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"gopkg.in/yaml.v3"
 	"movieexample.com/gen"
 	config "movieexample.com/metadata/configs"
 	"movieexample.com/metadata/internal/controller/metadata"
 	grpchandler "movieexample.com/metadata/internal/handler/grpc"
 	memoryRepo "movieexample.com/metadata/internal/repository/memory"
-	mysql "movieexample.com/metadata/internal/repository/sql"
+	"movieexample.com/metadata/internal/repository/postgres"
 	"movieexample.com/pkg/discovery"
 	"movieexample.com/pkg/discovery/consul"
 	memoryDiscovery "movieexample.com/pkg/discovery/memory"
@@ -40,27 +37,21 @@ const (
 
 func main() {
 	var logger *zap.Logger
-	configPathLocal := "./metadata/configs/base.yaml"
+
+	cfg, err := config.SetUpConfig()
+	if err != nil {
+		panic(err)
+	}
 	env := os.Getenv("ENV")
-	configpath := os.Getenv("CONFIG_PATH")
+	fmt.Println(env, "Env from Environment")
 	if env == "" {
 		env = devEnv
 	}
-	if configpath == "" {
-		configpath = configPathLocal
-	}
+
 	if env == devEnv {
 		logger, _ = zap.NewDevelopment()
 	} else {
 		logger, _ = zap.NewProduction()
-	}
-	viperConfig := viper.New()
-	logger.Info("env", zap.String("env", env))
-	logger.Info("configpath", zap.String("configpath", configpath))
-	viperConfig.SetConfigFile(configpath)
-	viperConfig.SetConfigType("yaml")
-	if err := viperConfig.ReadInConfig(); err != nil {
-		logger.Fatal("Failed to read configuration", zap.Error(err))
 	}
 
 	defer func() {
@@ -73,25 +64,6 @@ func main() {
 	logger = logger.With(zap.String("service", serviceName))
 
 	// setting up metadata config rom yaml file
-	var cfg *config.Config
-	var port int
-
-	{
-
-		f, err := os.Open(configpath)
-		if err != nil {
-			logger.Fatal("Failed to open configuration", zap.Error(err))
-		}
-
-		if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
-			logger.Fatal("Failed to parse configuration:%w", zap.Error(err))
-		}
-
-		port = cfg.API.Port
-
-		logger.Info("Starting the metadata service", zap.Int("port", port))
-
-	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -102,7 +74,7 @@ func main() {
 		if env == devEnv {
 			registry = memoryDiscovery.NewRegistry()
 		} else {
-			registry, err = consul.NewRegistry("consul:8500")
+			registry, err = consul.NewRegistry(cfg.Consul.Address)
 			if err != nil {
 				panic(err)
 			}
@@ -110,7 +82,7 @@ func main() {
 
 		instanceID := discovery.GenerateInstanceID(serviceName)
 
-		if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("localhost:%d", cfg.GRPC.Port)); err != nil {
+		if err := registry.Register(ctx, instanceID, serviceName, fmt.Sprintf("%s:%d", cfg.Host, cfg.GRPC.Port)); err != nil {
 			panic(err)
 		}
 
@@ -159,21 +131,23 @@ func main() {
 		otel.SetTextMapPropagator(propagation.TraceContext{})
 
 		// setting up repository Env
-		if env == devEnv {
+		if env == string(devEnv) {
 			repo = memoryRepo.New()
+			logger.Info("Connected to memory")
+			logger.Info("Memory repo connected at env: ", zap.String("env", env))
 		} else {
-			repo, err = mysql.New()
-			logger.Info("Connected to mysql")
+			repo, err = postgres.ConnectSQL(cfg)
 			if err != nil {
 				logger.Fatal("Failed to initialize mysql", zap.Error(err))
 			}
+			logger.Info("Connected to mysql")
 		}
 
 		// setting up repository
 		ctrl := metadata.New(repo)
 		h := grpchandler.New(ctrl)
 
-		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%v", cfg.GRPC.Port))
+		lis, err := net.Listen("tcp", fmt.Sprintf("%s:%v", cfg.Host, cfg.GRPC.Port))
 		if err != nil {
 			logger.Fatal("Failed to listen", zap.Error(err))
 		}
@@ -191,7 +165,7 @@ func main() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-
+			logger.Info("Starting gRPC server", zap.Int("port", cfg.GRPC.Port))
 			if err := srv.Serve(lis); err != nil {
 				logger.Fatal("Failed to serve", zap.Error(err))
 				return
@@ -217,7 +191,7 @@ func main() {
 		defer wg.Done()
 
 		logger.Info("Starting health check server", zap.Int("port", cfg.API.Port))
-		log.Println("HTTP port binding here:", cfg.API.Port)
+		logger.Info("HTTP port binding here:", zap.Int("http_port", cfg.API.Port))
 
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Info("HTTP server failed: ", zap.Error(err))

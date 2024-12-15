@@ -15,7 +15,6 @@ FROM alpine:latest
 ARG service
 WORKDIR /app
 COPY --from=0 /app/main .
-COPY --from=0 /app/$service/configs/base.yaml  ./${service}/configs/base.yaml
 EXPOSE $HTTP_PORT
 EXPOSE $GRPC_PORT
 CMD ["./main"]

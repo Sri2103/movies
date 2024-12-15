@@ -1,9 +1,87 @@
 services:
-  prometheus:
-    image: prom/prometheus:latest
-    command:
-        - --config.file=/etc/prometheus/prometheus-config.yaml
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   command:
+  #       - --config.file=/etc/prometheus/prometheus-config.yaml
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./prometheus.yaml:/etc/prometheus/prometheus-config.yaml
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
     ports:
-      - "9090:9090"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "4317:4317"
+      - "4318:4318"
+
+  consul-server:
+    image: hashicorp/consul:1.10.0
+    container_name: consul-server
+    restart: always
     volumes:
-      - ./prometheus.yaml:/etc/prometheus/prometheus-config.yaml
+      - ./consul-server.json:/consul/config/server.json:ro
+    ports:
+      - "8500:8500"
+      - "8600:8600/tcp"
+      - "8600:8600/udp"
+    command: "agent"
+
+  consul-client:
+    image: hashicorp/consul:1.10.0
+    container_name: consul-client
+    restart: always
+    volumes:
+      - ./consul-client.json:/consul/config/client.json:ro
+    command: "agent"
+
+  postgres:
+    image: postgres:latest
+    container_name: my_postgres_dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: harsha
+      POSTGRES_DB: todo
+    ports:
+      - "5432:5432"
+    volumes:
+      - movie_data:/var/lib/postgresql/data
+
+  metadata:
+    container_name: metadata
+    build:
+      context: .
+      args:
+        - service=metadata
+    environment:
+      HOST: metadata
+      JAEGER_AGENT_HOST: jaeger
+      JAEGER_AGENT_PORT: 4317
+      CONSUL_HOST: consul-server
+      CONSUL_PORT: 8500
+      CONSUL_SCHEME: http
+      HTTP_PORT: 9092
+      GRPC_PORT: 8081
+      ENV: docker
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: harsha
+      POSTGRES_DATABASE: movies
+      POSTGRES_SSL_MODE: disable
+
+    ports:
+      - "8081:8081"
+      - "9092:9092"
+    depends_on:
+      consul-server:
+        condition: service_started
+      consul-client:
+        condition: service_started
+      jaeger:
+        condition: service_started
+
+volumes:
+  movie_data:

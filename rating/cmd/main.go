@@ -39,7 +39,7 @@ func main() {
 	var logger *zap.Logger
 	// get env from env
 
-	configPathLocal := "./rating/internal/configs/base.yaml"
+	configPathLocal := "./rating/configs/base.yaml"
 	env := os.Getenv("ENV")
 	configpath := os.Getenv("CONFIG_PATH")
 

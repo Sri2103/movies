@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"movieexample.com/gen"
+	config "movieexample.com/metadata/configs"
 	mysql "movieexample.com/metadata/internal/repository/sql"
 	"movieexample.com/metadata/pkg/testutil"
 	"movieexample.com/pkg/discovery"
@@ -52,7 +53,7 @@ func TestPutData(t *testing.T) {
 
 func StartMetadataService(ctx context.Context, registry discovery.Registry) (*grpc.Server, error) {
 	log.Println("Starting metadata service on :", metadataServiceAddr)
-	r, err := mysql.New()
+	r, err := mysql.New(&config.Config{})
 	if err != nil {
 		return nil, err
 	}

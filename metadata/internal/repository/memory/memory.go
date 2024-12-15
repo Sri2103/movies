@@ -21,6 +21,10 @@ func New() *Repository {
 	}
 }
 
+func (r *Repository) RepoInfo() string {
+	return "memoryRepo"
+}
+
 // Get retrieves the Metadata for the given id from the in-memory repository.
 // If the Metadata is not found, it returns repository.ErrNotFound.
 func (r *Repository) Get(ctx context.Context, id string) (*model.Metadata, error) {
