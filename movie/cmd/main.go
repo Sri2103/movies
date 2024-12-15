@@ -18,7 +18,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"gopkg.in/yaml.v3"
 	"movieexample.com/gen"
 	config "movieexample.com/movie/configs"
 	"movieexample.com/movie/internal/controller/movie"
@@ -39,9 +38,12 @@ const (
 
 func main() {
 	var logger *zap.Logger
+	cfg, err := config.SetUpConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	env := os.Getenv("ENV")
-	configPath := os.Getenv("CONFIG_PATH")
 
 	if env == "" {
 		env = devEnv
@@ -59,19 +61,6 @@ func main() {
 			return
 		}
 	}()
-
-	var cfg *config.Config
-	{
-		f, err := os.Open(configPath)
-		if err != nil {
-			logger.Fatal("Failed to open config file", zap.Error(err))
-		}
-
-		if err := yaml.NewDecoder(f).Decode(&cfg); err != nil {
-			logger.Fatal("Failed to decode config file", zap.Error(err))
-		}
-
-	}
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
@@ -106,14 +95,14 @@ func main() {
 		if env == devEnv {
 			registry = memory.NewRegistry()
 		} else {
-			registry, err = consul.NewRegistry("localhost:8500")
+			registry, err = consul.NewRegistry(cfg.Consul.Address)
 			if err != nil {
 				logger.Fatal("error connecting to consul", zap.Error(err))
 			}
 		}
 
 		instanceID := discovery.GenerateInstanceID(ServiceName)
-		if err := registry.Register(ctx, instanceID, ServiceName, fmt.Sprintf("%s:%d", cfg.Grpc.Host, cfg.Grpc.Port)); err != nil {
+		if err := registry.Register(ctx, instanceID, ServiceName, fmt.Sprintf("%s:%d", cfg.GRPC.Host, cfg.GRPC.Port)); err != nil {
 			logger.Fatal("Failed to register service", zap.Error(err))
 		}
 
@@ -141,7 +130,7 @@ func main() {
 
 	{
 		controller := movie.New(ratingGateway, metadataGateway)
-		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", cfg.Grpc.Port))
+		lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", cfg.GRPC.Port))
 		if err != nil {
 			log.Fatalf("failed to listen: %v", err)
 		}

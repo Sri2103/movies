@@ -1,25 +1,41 @@
 package config
 
 type Config struct {
-	Consul Consul `yaml:"consul"`
-	Grpc   Grpc   `yaml:"grpc"`
-	API    API    `yaml:"http"`
+	API        *APIConfig        `yaml:"http"`
+	Jaeger     *JaegerConfig     `yaml:"jaeger"`
+	Prometheus *PrometheusConfig `yaml:"prometheus"`
+	Consul     *ConsulConfig     `yaml:"consul"`
+	GRPC       *GRPCConfig       `yaml:"grpc"`
+	Host       string            `yaml:"host"`
+	Postgres   *PostgresConfig   `yaml:"mysql"`
 }
 
-type Consul struct {
-	Host string `yaml:"host"`
-}
-
-type Grpc struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
-}
-
-type Jaeger struct {
+type APIConfig struct {
 	Host string `yaml:"host"`
 	Port int    `yaml:"port"`
 }
 
-type API struct {
-	Port int `yaml:"port"`
+type GRPCConfig struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
+}
+
+type JaegerConfig struct {
+	URL string `yaml:"url"`
+}
+
+type PrometheusConfig struct {
+	MetricsPort int `yaml:"metricsPort"`
+}
+
+type ConsulConfig struct {
+	Address string `yaml:"address"`
+}
+type PostgresConfig struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	Database string `yaml:"database"`
+	SslMode  string `yaml:"sslmode"`
 }

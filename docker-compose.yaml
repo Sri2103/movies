@@ -115,5 +115,38 @@ services:
       jaeger:
         condition: service_started
 
+  movie:
+    container_name: movie
+    build:
+      context: .
+      args:
+        - service=movie
+    environment:
+      HOST: movie
+      JAEGER_AGENT_HOST: jaeger
+      JAEGER_AGENT_PORT: 4317
+      CONSUL_HOST: consul-server
+      CONSUL_PORT: 8500
+      CONSUL_SCHEME: http
+      HTTP_PORT: 9094
+      GRPC_PORT: 8083
+      ENV: docker
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: harsha
+      POSTGRES_DATABASE: movies
+      POSTGRES_SSL_MODE: disable
+    ports:
+      - "8083:8083"
+      - "9094:9094"
+    depends_on:
+      consul-server:
+        condition: service_started
+      consul-client:
+        condition: service_started
+      jaeger:
+        condition: service_started
+
 volumes:
   movie_data:
