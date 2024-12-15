@@ -24,7 +24,7 @@ type Repository struct {
 // If the connection cannot be established, an error is returned.
 func New(cfg *config.Config) (metadata.Repository, error) {
 	dsn := fmt.Sprintf("%s:%s@/%s?allowPublicKeyRetrieval=%t&tls=%t&charset=utf8mb4&parseTime=true",
-		"root", "rootPassword","test", true, false)
+		"root", "rootPassword", "test", true, false)
 
 	fmt.Println(dsn, "DSN string")
 	db, err := sql.Open("mysql", dsn)
