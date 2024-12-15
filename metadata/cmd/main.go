@@ -90,7 +90,7 @@ func main() {
 		if env != devEnv {
 			go func() {
 				for {
-					if err := registry.ReportHealthState(instanceID,serviceName); err != nil {
+					if err := registry.ReportHealthState(instanceID, serviceName); err != nil {
 						logger.Error("Failed to report healthy state", zap.Error(err))
 					}
 
